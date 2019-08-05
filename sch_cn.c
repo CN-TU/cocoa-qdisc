@@ -66,10 +66,16 @@ struct fq_flow {
 	struct rb_node	fq_node;	/* anchor in fq_root[] trees */
 	struct sock	*sk;
 	int		qlen;		/* number of packets in flow queue */
+
+	int		flow_max_qlen;
+	unsigned long last_loss_time;
+	unsigned long idle_since_last_time;
+	unsigned long bytes_sent_since_last_time;
+	unsigned long min_queue_size;
+
 	int		credit;
 	u32		socket_hash;	/* sk_hash */
 	struct fq_flow *next;		/* next pointer in RR lists, or &detached */
-
 	struct rb_node  rate_node;	/* anchor in q->delayed tree */
 	u64		time_next_packet;
 };
@@ -894,7 +900,7 @@ static int fq_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
 }
 
 static struct Qdisc_ops fq_qdisc_ops __read_mostly = {
-	.id		=	"fq",
+	.id		=	"cn",
 	.priv_size	=	sizeof(struct fq_sched_data),
 
 	.enqueue	=	fq_enqueue,
@@ -913,7 +919,7 @@ static int __init fq_module_init(void)
 {
 	int ret;
 
-	fq_flow_cachep = kmem_cache_create("fq_flow_cache",
+	fq_flow_cachep = kmem_cache_create("cn_flow_cache",
 					   sizeof(struct fq_flow),
 					   0, 0, NULL);
 	if (!fq_flow_cachep)
