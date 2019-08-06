@@ -314,6 +314,7 @@ static struct fq_flow *fq_classify(struct sk_buff *skb, struct fq_sched_data *q)
 
 	q->flows++;
 	q->inactive_flows++;
+	printk(KERN_DEBUG "Debug message shown!\n");
 	return f;
 }
 
