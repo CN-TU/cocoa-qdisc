@@ -234,6 +234,52 @@ static void fq_gc(struct fq_sched_data *q,
 	}
 }
 
+struct five_tuple {
+	uint32_t src_ip;
+	uint32_t dst_ip;
+	uint16_t src_port;
+	uint16_t dst_port;
+	uint8_t transport_protocol;
+};
+
+struct ipv4_address {
+	char bytes[32];
+};
+
+struct ipv4_address get_ip(unsigned int ip) {
+		unsigned char bytes[4];
+    bytes[0] = ip & 0xFF;
+    bytes[1] = (ip >> 8) & 0xFF;
+    bytes[2] = (ip >> 16) & 0xFF;
+    bytes[3] = (ip >> 24) & 0xFF;
+		struct ipv4_address ip_str;
+		snprintf(ip_str.bytes, sizeof(ip_str.bytes), "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3]);
+    return ip_str;
+}
+
+static struct five_tuple get_five_tuple_from_skb(struct sk_buff *skb) {
+	struct iphdr *ip_header = (struct iphdr *)skb_network_header(skb);
+	struct udphdr *udp_header;
+	struct tcphdr *tcp_header;
+	// struct list_head *p;
+
+	unsigned int src_ip = (unsigned int)ip_header->saddr;
+	unsigned int dst_ip = (unsigned int)ip_header->daddr;
+	unsigned int src_port = 0;
+	unsigned int dst_port = 0;
+
+	if (ip_header->protocol==17) {
+					udp_header = (struct udphdr *)skb_transport_header(skb);
+					src_port = (unsigned int)ntohs(udp_header->source);
+	} else if (ip_header->protocol == 6) {
+					tcp_header = (struct tcphdr *)skb_transport_header(skb);
+					src_port = (unsigned int)ntohs(tcp_header->source);
+					dst_port = (unsigned int)ntohs(tcp_header->dest);
+	}
+	struct five_tuple ft = { .src_ip=src_ip, .dst_ip=dst_ip, .src_port=src_port, .dst_port=dst_port, .transport_protocol=ip_header->protocol };
+	return ft;
+}
+
 static struct fq_flow *fq_classify(struct sk_buff *skb, struct fq_sched_data *q)
 {
 	struct rb_node **p, *parent;
@@ -314,7 +360,13 @@ static struct fq_flow *fq_classify(struct sk_buff *skb, struct fq_sched_data *q)
 
 	q->flows++;
 	q->inactive_flows++;
-	printk(KERN_DEBUG "Debug message shown!\n");
+	struct five_tuple ft = get_five_tuple_from_skb(skb);
+	struct ipv4_address src_ip = get_ip(ft.src_ip);
+	struct ipv4_address dst_ip = get_ip(ft.dst_ip);
+	if (ft.transport_protocol == 6) {
+		// printk(KERN_DEBUG "sch_cn: Got new flow: proto=%u, src_port=%u, dst_port=%u!\n", (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
+		printk(KERN_DEBUG "sch_cn: Got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", src_ip.bytes, dst_ip.bytes, (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
+	}
 	return f;
 }
 
