@@ -57,44 +57,46 @@
 /*
  * Per flow structure, dynamically allocated
  */
-struct fq_flow {
+struct cn_flow {
 	struct sk_buff	*head;		/* list of skbs for this flow : first skb */
 	union {
 		struct sk_buff *tail;	/* last skb in the list */
 		unsigned long  age;	/* jiffies when flow was emptied, for gc */
 	};
-	struct rb_node	fq_node;	/* anchor in fq_root[] trees */
+	struct rb_node	cn_node;	/* anchor in cn_root[] trees */
 	struct sock	*sk;
 	int		qlen;		/* number of packets in flow queue */
 
 	int		flow_max_qlen;
+
 	unsigned long last_loss_time;
 	unsigned long idle_since_last_time;
 	unsigned long bytes_sent_since_last_time;
 	unsigned long min_queue_size;
+	bool in_startup_phase;
 
 	int		credit;
 	u32		socket_hash;	/* sk_hash */
-	struct fq_flow *next;		/* next pointer in RR lists, or &detached */
+	struct cn_flow *next;		/* next pointer in RR lists, or &detached */
 	struct rb_node  rate_node;	/* anchor in q->delayed tree */
 	u64		time_next_packet;
 };
 
-struct fq_flow_head {
-	struct fq_flow *first;
-	struct fq_flow *last;
+struct cn_flow_head {
+	struct cn_flow *first;
+	struct cn_flow *last;
 };
 
-struct fq_sched_data {
-	struct fq_flow_head new_flows;
+struct cn_sched_data {
+	struct cn_flow_head new_flows;
 
-	struct fq_flow_head old_flows;
+	struct cn_flow_head old_flows;
 
 	struct rb_root	delayed;	/* for rate limited flows */
 	u64		time_next_delayed_flow;
 	unsigned long	unthrottle_latency_ns;
 
-	struct fq_flow	internal;	/* for non classified or high prio packets */
+	struct cn_flow	internal;	/* for non classified or high prio packets */
 	u32		quantum;
 	u32		initial_quantum;
 	u32		flow_refill_delay;
@@ -102,9 +104,9 @@ struct fq_sched_data {
 	u32		flow_plimit;	/* max packets per flow */
 	u32		orphan_mask;	/* mask for orphaned skb */
 	u32		low_rate_threshold;
-	struct rb_root	*fq_root;
+	struct rb_root	*cn_root;
 	u8		rate_enable;
-	u8		fq_trees_log;
+	u8		cn_trees_log;
 
 	u32		flows;
 	u32		inactive_flows;
@@ -121,25 +123,25 @@ struct fq_sched_data {
 };
 
 /* special value to mark a detached flow (not on old/new list) */
-static struct fq_flow detached, throttled;
+static struct cn_flow detached, throttled;
 
-static void fq_flow_set_detached(struct fq_flow *f)
+static void cn_flow_set_detached(struct cn_flow *f)
 {
 	f->next = &detached;
 	f->age = jiffies;
 }
 
-static bool fq_flow_is_detached(const struct fq_flow *f)
+static bool cn_flow_is_detached(const struct cn_flow *f)
 {
 	return f->next == &detached;
 }
 
-static bool fq_flow_is_throttled(const struct fq_flow *f)
+static bool cn_flow_is_throttled(const struct cn_flow *f)
 {
 	return f->next == &throttled;
 }
 
-static void fq_flow_add_tail(struct fq_flow_head *head, struct fq_flow *flow)
+static void cn_flow_add_tail(struct cn_flow_head *head, struct cn_flow *flow)
 {
 	if (head->first)
 		head->last->next = flow;
@@ -149,22 +151,22 @@ static void fq_flow_add_tail(struct fq_flow_head *head, struct fq_flow *flow)
 	flow->next = NULL;
 }
 
-static void fq_flow_unset_throttled(struct fq_sched_data *q, struct fq_flow *f)
+static void cn_flow_unset_throttled(struct cn_sched_data *q, struct cn_flow *f)
 {
 	rb_erase(&f->rate_node, &q->delayed);
 	q->throttled_flows--;
-	fq_flow_add_tail(&q->old_flows, f);
+	cn_flow_add_tail(&q->old_flows, f);
 }
 
-static void fq_flow_set_throttled(struct fq_sched_data *q, struct fq_flow *f)
+static void cn_flow_set_throttled(struct cn_sched_data *q, struct cn_flow *f)
 {
 	struct rb_node **p = &q->delayed.rb_node, *parent = NULL;
 
 	while (*p) {
-		struct fq_flow *aux;
+		struct cn_flow *aux;
 
 		parent = *p;
-		aux = rb_entry(parent, struct fq_flow, rate_node);
+		aux = rb_entry(parent, struct cn_flow, rate_node);
 		if (f->time_next_packet >= aux->time_next_packet)
 			p = &parent->rb_right;
 		else
@@ -181,24 +183,26 @@ static void fq_flow_set_throttled(struct fq_sched_data *q, struct fq_flow *f)
 }
 
 
-static struct kmem_cache *fq_flow_cachep __read_mostly;
+static struct kmem_cache *cn_flow_cachep __read_mostly;
 
+#define FLOW_TIMEOUT 60
 
 /* limit number of collected flows per round */
-#define FQ_GC_MAX 8
-#define FQ_GC_AGE (3*HZ)
+#define CN_GC_MAX 8
+// #define CN_GC_AGE (3*HZ)
+#define CN_GC_AGE (FLOW_TIMEOUT*HZ)
 
-static bool fq_gc_candidate(const struct fq_flow *f)
+static bool cn_gc_candidate(const struct cn_flow *f)
 {
-	return fq_flow_is_detached(f) &&
-	       time_after(jiffies, f->age + FQ_GC_AGE);
+	return cn_flow_is_detached(f) &&
+	       time_after(jiffies, f->age + CN_GC_AGE);
 }
 
-static void fq_gc(struct fq_sched_data *q,
+static void cn_gc(struct cn_sched_data *q,
 		  struct rb_root *root,
 		  struct sock *sk)
 {
-	struct fq_flow *f, *tofree[FQ_GC_MAX];
+	struct cn_flow *f, *tofree[CN_GC_MAX];
 	struct rb_node **p, *parent;
 	int fcnt = 0;
 
@@ -207,13 +211,13 @@ static void fq_gc(struct fq_sched_data *q,
 	while (*p) {
 		parent = *p;
 
-		f = rb_entry(parent, struct fq_flow, fq_node);
+		f = rb_entry(parent, struct cn_flow, cn_node);
 		if (f->sk == sk)
 			break;
 
-		if (fq_gc_candidate(f)) {
+		if (cn_gc_candidate(f)) {
 			tofree[fcnt++] = f;
-			if (fcnt == FQ_GC_MAX)
+			if (fcnt == CN_GC_MAX)
 				break;
 		}
 
@@ -227,10 +231,10 @@ static void fq_gc(struct fq_sched_data *q,
 	q->inactive_flows -= fcnt;
 	q->stat_gc_flows += fcnt;
 	while (fcnt) {
-		struct fq_flow *f = tofree[--fcnt];
+		struct cn_flow *f = tofree[--fcnt];
 
-		rb_erase(&f->fq_node, root);
-		kmem_cache_free(fq_flow_cachep, f);
+		rb_erase(&f->cn_node, root);
+		kmem_cache_free(cn_flow_cachep, f);
 	}
 }
 
@@ -248,11 +252,11 @@ struct ipv4_address {
 
 struct ipv4_address get_ip(unsigned int ip) {
 		unsigned char bytes[4];
+		struct ipv4_address ip_str;
     bytes[0] = ip & 0xFF;
     bytes[1] = (ip >> 8) & 0xFF;
     bytes[2] = (ip >> 16) & 0xFF;
     bytes[3] = (ip >> 24) & 0xFF;
-		struct ipv4_address ip_str;
 		snprintf(ip_str.bytes, sizeof(ip_str.bytes), "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3]);
     return ip_str;
 }
@@ -261,6 +265,7 @@ static struct five_tuple get_five_tuple_from_skb(struct sk_buff *skb) {
 	struct iphdr *ip_header = (struct iphdr *)skb_network_header(skb);
 	struct udphdr *udp_header;
 	struct tcphdr *tcp_header;
+	struct five_tuple ft;
 	// struct list_head *p;
 
 	unsigned int src_ip = (unsigned int)ip_header->saddr;
@@ -276,16 +281,25 @@ static struct five_tuple get_five_tuple_from_skb(struct sk_buff *skb) {
 					src_port = (unsigned int)ntohs(tcp_header->source);
 					dst_port = (unsigned int)ntohs(tcp_header->dest);
 	}
-	struct five_tuple ft = { .src_ip=src_ip, .dst_ip=dst_ip, .src_port=src_port, .dst_port=dst_port, .transport_protocol=ip_header->protocol };
+
+	ft.src_ip=src_ip,
+	ft.dst_ip=dst_ip;
+	ft.src_port=src_port;
+	ft.dst_port=dst_port;
+	ft.transport_protocol=ip_header->protocol;
+
 	return ft;
 }
 
-static struct fq_flow *fq_classify(struct sk_buff *skb, struct fq_sched_data *q)
+static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 {
 	struct rb_node **p, *parent;
 	struct sock *sk = skb->sk;
 	struct rb_root *root;
-	struct fq_flow *f;
+	struct cn_flow *f;
+	struct five_tuple ft;
+	struct ipv4_address src_ip;
+	struct ipv4_address dst_ip;
 
 	/* warning: no starvation prevention... */
 	if (unlikely((skb->priority & TC_PRIO_MAX) == TC_PRIO_CONTROL))
@@ -310,18 +324,18 @@ static struct fq_flow *fq_classify(struct sk_buff *skb, struct fq_sched_data *q)
 		skb_orphan(skb);
 	}
 
-	root = &q->fq_root[hash_ptr(sk, q->fq_trees_log)];
+	root = &q->cn_root[hash_ptr(sk, q->cn_trees_log)];
 
-	if (q->flows >= (2U << q->fq_trees_log) &&
+	if (q->flows >= (2U << q->cn_trees_log) &&
 	    q->inactive_flows > q->flows/2)
-		fq_gc(q, root, sk);
+		cn_gc(q, root, sk);
 
 	p = &root->rb_node;
 	parent = NULL;
 	while (*p) {
 		parent = *p;
 
-		f = rb_entry(parent, struct fq_flow, fq_node);
+		f = rb_entry(parent, struct cn_flow, cn_node);
 		if (f->sk == sk) {
 			/* socket might have been reallocated, so check
 			 * if its sk_hash is the same.
@@ -332,8 +346,8 @@ static struct fq_flow *fq_classify(struct sk_buff *skb, struct fq_sched_data *q)
 				     f->socket_hash != sk->sk_hash)) {
 				f->credit = q->initial_quantum;
 				f->socket_hash = sk->sk_hash;
-				if (fq_flow_is_throttled(f))
-					fq_flow_unset_throttled(q, f);
+				if (cn_flow_is_throttled(f))
+					cn_flow_unset_throttled(q, f);
 				f->time_next_packet = 0ULL;
 			}
 			return f;
@@ -344,25 +358,25 @@ static struct fq_flow *fq_classify(struct sk_buff *skb, struct fq_sched_data *q)
 			p = &parent->rb_left;
 	}
 
-	f = kmem_cache_zalloc(fq_flow_cachep, GFP_ATOMIC | __GFP_NOWARN);
+	f = kmem_cache_zalloc(cn_flow_cachep, GFP_ATOMIC | __GFP_NOWARN);
 	if (unlikely(!f)) {
 		q->stat_allocation_errors++;
 		return &q->internal;
 	}
-	fq_flow_set_detached(f);
+	cn_flow_set_detached(f);
 	f->sk = sk;
 	if (skb->sk)
 		f->socket_hash = sk->sk_hash;
 	f->credit = q->initial_quantum;
 
-	rb_link_node(&f->fq_node, parent, p);
-	rb_insert_color(&f->fq_node, root);
+	rb_link_node(&f->cn_node, parent, p);
+	rb_insert_color(&f->cn_node, root);
 
 	q->flows++;
 	q->inactive_flows++;
-	struct five_tuple ft = get_five_tuple_from_skb(skb);
-	struct ipv4_address src_ip = get_ip(ft.src_ip);
-	struct ipv4_address dst_ip = get_ip(ft.dst_ip);
+	ft = get_five_tuple_from_skb(skb);
+	src_ip = get_ip(ft.src_ip);
+	dst_ip = get_ip(ft.dst_ip);
 	if (ft.transport_protocol == 6) {
 		// printk(KERN_DEBUG "sch_cn: Got new flow: proto=%u, src_port=%u, dst_port=%u!\n", (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
 		printk(KERN_DEBUG "sch_cn: Got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", src_ip.bytes, dst_ip.bytes, (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
@@ -372,7 +386,7 @@ static struct fq_flow *fq_classify(struct sk_buff *skb, struct fq_sched_data *q)
 
 
 /* remove one skb from head of flow queue */
-static struct sk_buff *fq_dequeue_head(struct Qdisc *sch, struct fq_flow *flow)
+static struct sk_buff *cn_dequeue_head(struct Qdisc *sch, struct cn_flow *flow)
 {
 	struct sk_buff *skb = flow->head;
 
@@ -406,7 +420,7 @@ static bool skb_is_retransmit(struct sk_buff *skb)
  *         [ normal pkt 3]
  * tail->  [ normal pkt 4]
  */
-static void flow_queue_add(struct fq_flow *flow, struct sk_buff *skb)
+static void flow_queue_add(struct cn_flow *flow, struct sk_buff *skb)
 {
 	struct sk_buff *prev, *head = flow->head;
 
@@ -444,16 +458,16 @@ static void flow_queue_add(struct fq_flow *flow, struct sk_buff *skb)
 	}
 }
 
-static int fq_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 		      struct sk_buff **to_free)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
-	struct fq_flow *f;
+	struct cn_sched_data *q = qdisc_priv(sch);
+	struct cn_flow *f;
 
 	if (unlikely(sch->q.qlen >= sch->limit))
 		return qdisc_drop(skb, sch, to_free);
 
-	f = fq_classify(skb, q);
+	f = cn_classify(skb, q);
 	if (unlikely(f->qlen >= q->flow_plimit && f != &q->internal)) {
 		q->stat_flows_plimit++;
 		return qdisc_drop(skb, sch, to_free);
@@ -463,10 +477,10 @@ static int fq_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 	if (skb_is_retransmit(skb))
 		q->stat_tcp_retrans++;
 	qdisc_qstats_backlog_inc(sch, skb);
-	if (fq_flow_is_detached(f)) {
+	if (cn_flow_is_detached(f)) {
 		struct sock *sk = skb->sk;
 
-		fq_flow_add_tail(&q->new_flows, f);
+		cn_flow_add_tail(&q->new_flows, f);
 		if (time_after(jiffies, f->age + q->flow_refill_delay))
 			f->credit = max_t(u32, f->credit, q->quantum);
 		if (sk && q->rate_enable) {
@@ -489,7 +503,7 @@ static int fq_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 	return NET_XMIT_SUCCESS;
 }
 
-static void fq_check_throttled(struct fq_sched_data *q, u64 now)
+static void cn_check_throttled(struct cn_sched_data *q, u64 now)
 {
 	unsigned long sample;
 	struct rb_node *p;
@@ -506,29 +520,29 @@ static void fq_check_throttled(struct fq_sched_data *q, u64 now)
 
 	q->time_next_delayed_flow = ~0ULL;
 	while ((p = rb_first(&q->delayed)) != NULL) {
-		struct fq_flow *f = rb_entry(p, struct fq_flow, rate_node);
+		struct cn_flow *f = rb_entry(p, struct cn_flow, rate_node);
 
 		if (f->time_next_packet > now) {
 			q->time_next_delayed_flow = f->time_next_packet;
 			break;
 		}
-		fq_flow_unset_throttled(q, f);
+		cn_flow_unset_throttled(q, f);
 	}
 }
 
-static struct sk_buff *fq_dequeue(struct Qdisc *sch)
+static struct sk_buff *cn_dequeue(struct Qdisc *sch)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
+	struct cn_sched_data *q = qdisc_priv(sch);
 	u64 now = ktime_get_ns();
-	struct fq_flow_head *head;
+	struct cn_flow_head *head;
 	struct sk_buff *skb;
-	struct fq_flow *f;
+	struct cn_flow *f;
 	u32 rate, plen;
 
-	skb = fq_dequeue_head(sch, &q->internal);
+	skb = cn_dequeue_head(sch, &q->internal);
 	if (skb)
 		goto out;
-	fq_check_throttled(q, now);
+	cn_check_throttled(q, now);
 begin:
 	head = &q->new_flows;
 	if (!head->first) {
@@ -545,7 +559,7 @@ begin:
 	if (f->credit <= 0) {
 		f->credit += q->quantum;
 		head->first = f->next;
-		fq_flow_add_tail(&q->old_flows, f);
+		cn_flow_add_tail(&q->old_flows, f);
 		goto begin;
 	}
 
@@ -553,18 +567,18 @@ begin:
 	if (unlikely(skb && now < f->time_next_packet &&
 		     !skb_is_tcp_pure_ack(skb))) {
 		head->first = f->next;
-		fq_flow_set_throttled(q, f);
+		cn_flow_set_throttled(q, f);
 		goto begin;
 	}
 
-	skb = fq_dequeue_head(sch, f);
+	skb = cn_dequeue_head(sch, f);
 	if (!skb) {
 		head->first = f->next;
 		/* force a pass through old_flows to prevent starvation */
 		if ((head == &q->new_flows) && q->old_flows.first) {
-			fq_flow_add_tail(&q->old_flows, f);
+			cn_flow_add_tail(&q->old_flows, f);
 		} else {
-			fq_flow_set_detached(f);
+			cn_flow_set_detached(f);
 			q->inactive_flows++;
 		}
 		goto begin;
@@ -617,38 +631,38 @@ out:
 	return skb;
 }
 
-static void fq_flow_purge(struct fq_flow *flow)
+static void cn_flow_purge(struct cn_flow *flow)
 {
 	rtnl_kfree_skbs(flow->head, flow->tail);
 	flow->head = NULL;
 	flow->qlen = 0;
 }
 
-static void fq_reset(struct Qdisc *sch)
+static void cn_reset(struct Qdisc *sch)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
+	struct cn_sched_data *q = qdisc_priv(sch);
 	struct rb_root *root;
 	struct rb_node *p;
-	struct fq_flow *f;
+	struct cn_flow *f;
 	unsigned int idx;
 
 	sch->q.qlen = 0;
 	sch->qstats.backlog = 0;
 
-	fq_flow_purge(&q->internal);
+	cn_flow_purge(&q->internal);
 
-	if (!q->fq_root)
+	if (!q->cn_root)
 		return;
 
-	for (idx = 0; idx < (1U << q->fq_trees_log); idx++) {
-		root = &q->fq_root[idx];
+	for (idx = 0; idx < (1U << q->cn_trees_log); idx++) {
+		root = &q->cn_root[idx];
 		while ((p = rb_first(root)) != NULL) {
-			f = rb_entry(p, struct fq_flow, fq_node);
+			f = rb_entry(p, struct cn_flow, cn_node);
 			rb_erase(p, root);
 
-			fq_flow_purge(f);
+			cn_flow_purge(f);
 
-			kmem_cache_free(fq_flow_cachep, f);
+			kmem_cache_free(cn_flow_cachep, f);
 		}
 	}
 	q->new_flows.first	= NULL;
@@ -659,13 +673,13 @@ static void fq_reset(struct Qdisc *sch)
 	q->throttled_flows	= 0;
 }
 
-static void fq_rehash(struct fq_sched_data *q,
+static void cn_rehash(struct cn_sched_data *q,
 		      struct rb_root *old_array, u32 old_log,
 		      struct rb_root *new_array, u32 new_log)
 {
 	struct rb_node *op, **np, *parent;
 	struct rb_root *oroot, *nroot;
-	struct fq_flow *of, *nf;
+	struct cn_flow *of, *nf;
 	int fcnt = 0;
 	u32 idx;
 
@@ -673,10 +687,10 @@ static void fq_rehash(struct fq_sched_data *q,
 		oroot = &old_array[idx];
 		while ((op = rb_first(oroot)) != NULL) {
 			rb_erase(op, oroot);
-			of = rb_entry(op, struct fq_flow, fq_node);
-			if (fq_gc_candidate(of)) {
+			of = rb_entry(op, struct cn_flow, cn_node);
+			if (cn_gc_candidate(of)) {
 				fcnt++;
-				kmem_cache_free(fq_flow_cachep, of);
+				kmem_cache_free(cn_flow_cachep, of);
 				continue;
 			}
 			nroot = &new_array[hash_ptr(of->sk, new_log)];
@@ -686,7 +700,7 @@ static void fq_rehash(struct fq_sched_data *q,
 			while (*np) {
 				parent = *np;
 
-				nf = rb_entry(parent, struct fq_flow, fq_node);
+				nf = rb_entry(parent, struct cn_flow, cn_node);
 				BUG_ON(nf->sk == of->sk);
 
 				if (nf->sk > of->sk)
@@ -695,8 +709,8 @@ static void fq_rehash(struct fq_sched_data *q,
 					np = &parent->rb_left;
 			}
 
-			rb_link_node(&of->fq_node, parent, np);
-			rb_insert_color(&of->fq_node, nroot);
+			rb_link_node(&of->cn_node, parent, np);
+			rb_insert_color(&of->cn_node, nroot);
 		}
 	}
 	q->flows -= fcnt;
@@ -704,19 +718,19 @@ static void fq_rehash(struct fq_sched_data *q,
 	q->stat_gc_flows += fcnt;
 }
 
-static void fq_free(void *addr)
+static void cn_free(void *addr)
 {
 	kvfree(addr);
 }
 
-static int fq_resize(struct Qdisc *sch, u32 log)
+static int cn_resize(struct Qdisc *sch, u32 log)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
+	struct cn_sched_data *q = qdisc_priv(sch);
 	struct rb_root *array;
-	void *old_fq_root;
+	void *old_cn_root;
 	u32 idx;
 
-	if (q->fq_root && log == q->fq_trees_log)
+	if (q->cn_root && log == q->cn_trees_log)
 		return 0;
 
 	/* If XPS was setup, we can allocate memory on right NUMA node */
@@ -730,21 +744,21 @@ static int fq_resize(struct Qdisc *sch, u32 log)
 
 	sch_tree_lock(sch);
 
-	old_fq_root = q->fq_root;
-	if (old_fq_root)
-		fq_rehash(q, old_fq_root, q->fq_trees_log, array, log);
+	old_cn_root = q->cn_root;
+	if (old_cn_root)
+		cn_rehash(q, old_cn_root, q->cn_trees_log, array, log);
 
-	q->fq_root = array;
-	q->fq_trees_log = log;
+	q->cn_root = array;
+	q->cn_trees_log = log;
 
 	sch_tree_unlock(sch);
 
-	fq_free(old_fq_root);
+	cn_free(old_cn_root);
 
 	return 0;
 }
 
-static const struct nla_policy fq_policy[TCA_FQ_MAX + 1] = {
+static const struct nla_policy cn_policy[TCA_FQ_MAX + 1] = {
 	[TCA_FQ_PLIMIT]			= { .type = NLA_U32 },
 	[TCA_FQ_FLOW_PLIMIT]		= { .type = NLA_U32 },
 	[TCA_FQ_QUANTUM]		= { .type = NLA_U32 },
@@ -757,39 +771,42 @@ static const struct nla_policy fq_policy[TCA_FQ_MAX + 1] = {
 	[TCA_FQ_LOW_RATE_THRESHOLD]	= { .type = NLA_U32 },
 };
 
-static int fq_change(struct Qdisc *sch, struct nlattr *opt,
+static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 		     struct netlink_ext_ack *extack)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
+	struct cn_sched_data *q = qdisc_priv(sch);
 	struct nlattr *tb[TCA_FQ_MAX + 1];
 	int err, drop_count = 0;
 	unsigned drop_len = 0;
-	u32 fq_log;
+	u32 cn_log;
 
 	if (!opt)
 		return -EINVAL;
 
-	err = nla_parse_nested(tb, TCA_FQ_MAX, opt, fq_policy, NULL);
+	err = nla_parse_nested(tb, TCA_FQ_MAX, opt, cn_policy, NULL);
 	if (err < 0)
 		return err;
 
 	sch_tree_lock(sch);
 
-	fq_log = q->fq_trees_log;
+	cn_log = q->cn_trees_log;
 
 	if (tb[TCA_FQ_BUCKETS_LOG]) {
 		u32 nval = nla_get_u32(tb[TCA_FQ_BUCKETS_LOG]);
 
 		if (nval >= 1 && nval <= ilog2(256*1024))
-			fq_log = nval;
+			cn_log = nval;
 		else
 			err = -EINVAL;
 	}
 	if (tb[TCA_FQ_PLIMIT])
+
 		sch->limit = nla_get_u32(tb[TCA_FQ_PLIMIT]);
 
-	if (tb[TCA_FQ_FLOW_PLIMIT])
+	if (tb[TCA_FQ_FLOW_PLIMIT]) {
+		// printk(KERN_DEBUG "sch_cn: Setting flow_plimit=%u!\n", nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]));
 		q->flow_plimit = nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]);
+	}
 
 	if (tb[TCA_FQ_QUANTUM]) {
 		u32 quantum = nla_get_u32(tb[TCA_FQ_QUANTUM]);
@@ -834,11 +851,11 @@ static int fq_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (!err) {
 		sch_tree_unlock(sch);
-		err = fq_resize(sch, fq_log);
+		err = cn_resize(sch, cn_log);
 		sch_tree_lock(sch);
 	}
 	while (sch->q.qlen > sch->limit) {
-		struct sk_buff *skb = fq_dequeue(sch);
+		struct sk_buff *skb = cn_dequeue(sch);
 
 		if (!skb)
 			break;
@@ -852,26 +869,28 @@ static int fq_change(struct Qdisc *sch, struct nlattr *opt,
 	return err;
 }
 
-static void fq_destroy(struct Qdisc *sch)
+static void cn_destroy(struct Qdisc *sch)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
+	struct cn_sched_data *q = qdisc_priv(sch);
 
-	fq_reset(sch);
-	fq_free(q->fq_root);
+	cn_reset(sch);
+	cn_free(q->cn_root);
 	qdisc_watchdog_cancel(&q->watchdog);
 }
 
-static int fq_init(struct Qdisc *sch, struct nlattr *opt,
+static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 		   struct netlink_ext_ack *extack)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
+
+	struct cn_sched_data *q = qdisc_priv(sch);
 	int err;
+
+	// printk(KERN_DEBUG "sch_cn: cn_init called");
 
 	sch->limit		= 10000;
 	q->flow_plimit		= 100;
 
-	// q->quantum		= 2 * psched_mtu(qdisc_dev(sch));
-	// q->initial_quantum	= 10 * psched_mtu(qdisc_dev(sch));
+	// printk(KERN_DEBUG "sch_cn: MTU=%u!\n", psched_mtu(qdisc_dev(sch)));
 	q->quantum		= 2 * psched_mtu(qdisc_dev(sch));
 	q->initial_quantum	= 10 * psched_mtu(qdisc_dev(sch));
 
@@ -882,23 +901,24 @@ static int fq_init(struct Qdisc *sch, struct nlattr *opt,
 	q->new_flows.first	= NULL;
 	q->old_flows.first	= NULL;
 	q->delayed		= RB_ROOT;
-	q->fq_root		= NULL;
-	q->fq_trees_log		= ilog2(1024);
+	q->cn_root		= NULL;
+	q->cn_trees_log		= ilog2(1024);
 	q->orphan_mask		= 1024 - 1;
 	q->low_rate_threshold	= 550000 / 8;
 	qdisc_watchdog_init(&q->watchdog, sch);
 
-	if (opt)
-		err = fq_change(sch, opt, extack);
-	else
-		err = fq_resize(sch, q->fq_trees_log);
+	if (opt) {
+		// printk(KERN_DEBUG "sch_cn: Yeah, got options :)");
+		err = cn_change(sch, opt, extack);
+	} else
+		err = cn_resize(sch, q->cn_trees_log);
 
 	return err;
 }
 
-static int fq_dump(struct Qdisc *sch, struct sk_buff *skb)
+static int cn_dump(struct Qdisc *sch, struct sk_buff *skb)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
+	struct cn_sched_data *q = qdisc_priv(sch);
 	struct nlattr *opts;
 
 	opts = nla_nest_start(skb, TCA_OPTIONS);
@@ -918,7 +938,7 @@ static int fq_dump(struct Qdisc *sch, struct sk_buff *skb)
 	    nla_put_u32(skb, TCA_FQ_ORPHAN_MASK, q->orphan_mask) ||
 	    nla_put_u32(skb, TCA_FQ_LOW_RATE_THRESHOLD,
 			q->low_rate_threshold) ||
-	    nla_put_u32(skb, TCA_FQ_BUCKETS_LOG, q->fq_trees_log))
+	    nla_put_u32(skb, TCA_FQ_BUCKETS_LOG, q->cn_trees_log))
 		goto nla_put_failure;
 
 	return nla_nest_end(skb, opts);
@@ -927,9 +947,9 @@ nla_put_failure:
 	return -1;
 }
 
-static int fq_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
+static int cn_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
 {
-	struct fq_sched_data *q = qdisc_priv(sch);
+	struct cn_sched_data *q = qdisc_priv(sch);
 	struct tc_fq_qd_stats st;
 
 	sch_tree_lock(sch);
@@ -952,45 +972,45 @@ static int fq_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
 	return gnet_stats_copy_app(d, &st, sizeof(st));
 }
 
-static struct Qdisc_ops fq_qdisc_ops __read_mostly = {
+static struct Qdisc_ops cn_qdisc_ops __read_mostly = {
 	.id		=	"cn",
-	.priv_size	=	sizeof(struct fq_sched_data),
+	.priv_size	=	sizeof(struct cn_sched_data),
 
-	.enqueue	=	fq_enqueue,
-	.dequeue	=	fq_dequeue,
+	.enqueue	=	cn_enqueue,
+	.dequeue	=	cn_dequeue,
 	.peek		=	qdisc_peek_dequeued,
-	.init		=	fq_init,
-	.reset		=	fq_reset,
-	.destroy	=	fq_destroy,
-	.change		=	fq_change,
-	.dump		=	fq_dump,
-	.dump_stats	=	fq_dump_stats,
+	.init		=	cn_init,
+	.reset		=	cn_reset,
+	.destroy	=	cn_destroy,
+	.change		=	cn_change,
+	.dump		=	cn_dump,
+	.dump_stats	=	cn_dump_stats,
 	.owner		=	THIS_MODULE,
 };
 
-static int __init fq_module_init(void)
+static int __init cn_module_init(void)
 {
 	int ret;
 
-	fq_flow_cachep = kmem_cache_create("cn_flow_cache",
-					   sizeof(struct fq_flow),
+	cn_flow_cachep = kmem_cache_create("cn_flow_cache",
+					   sizeof(struct cn_flow),
 					   0, 0, NULL);
-	if (!fq_flow_cachep)
+	if (!cn_flow_cachep)
 		return -ENOMEM;
 
-	ret = register_qdisc(&fq_qdisc_ops);
+	ret = register_qdisc(&cn_qdisc_ops);
 	if (ret)
-		kmem_cache_destroy(fq_flow_cachep);
+		kmem_cache_destroy(cn_flow_cachep);
 	return ret;
 }
 
-static void __exit fq_module_exit(void)
+static void __exit cn_module_exit(void)
 {
-	unregister_qdisc(&fq_qdisc_ops);
-	kmem_cache_destroy(fq_flow_cachep);
+	unregister_qdisc(&cn_qdisc_ops);
+	kmem_cache_destroy(cn_flow_cachep);
 }
 
-module_init(fq_module_init)
-module_exit(fq_module_exit)
+module_init(cn_module_init)
+module_exit(cn_module_exit)
 MODULE_AUTHOR("Eric Dumazet");
 MODULE_LICENSE("GPL");
