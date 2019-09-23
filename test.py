@@ -8,6 +8,7 @@ import sys, os
 import io
 import time
 import math
+import signal
 sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import subprocess
@@ -15,6 +16,7 @@ import subprocess
 # matplotlib.use("Agg")
 # import matplotlib.pyplot as plt
 import virtnet
+import statistics
 
 # import numpy as np
 # from scipy.stats import norm
@@ -29,11 +31,13 @@ import virtnet
 # milliseconds
 delay_to_add = 100
 # Mbit/s
-rate = 10
+rate = 100
+# Bytes, obviously
 MTU = 1514
+QDISC_NAME = "fq"
 
-# BDP_packets = rate*1000000*delay_to_add/1000/(MTU*8)
-BDP_packets = 1
+BDP_packets = rate*1000000*delay_to_add/1000/(MTU*8)
+# BDP_packets = 1
 print("BDP_packets", BDP_packets)
 # quit()
 
@@ -49,7 +53,8 @@ def run_commands(cmds, Popen=False):
 		try:
 			print("cmd", cmd)
 			if not Popen:
-				output = subprocess.run(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kwargs)
+				output = subprocess.run(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, **kwargs)
+				# print("output", output)
 				return_stuff.append(output)
 			else:
 				popen = subprocess.Popen(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kwargs)
@@ -89,14 +94,31 @@ def run(vnet):
 		# import pdb; pdb.set_trace()
 
 		for interface in switch.interfaces:
-			run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb rate {}mbit".format(interface, rate,), ("tc qdisc add dev {} parent 2:21 handle 3: cn nopacing spam flow_limit {}".format(interface, int(math.ceil(BDP_packets))), {"env": env_with_tc})])
-			# run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb rate {}mbit ceil {}mbit".format(interface, rate, rate), ("tc qdisc add dev {} parent 2:21 handle 3: cn".format(interface), {"env": env_with_tc})])
-		#     # output = subprocess.run(f"tc qdisc replace dev {interface} root cn".split(" "), capture_output=True, env=env_with_tc)
+			run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb rate {}mbit".format(interface, rate,), ("tc qdisc add dev {} parent 2:21 handle 3: {} nopacing flow_limit {}".format(interface, QDISC_NAME, int(math.ceil(BDP_packets))), {"env": env_with_tc})])
+			# run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb rate {}mbit ceil {}mbit".format(interface, rate, rate), ("tc qdisc add dev {} parent 2:21 handle 3: {}".format(interface, QDISC_NAME), {"env": env_with_tc})])
+		#     # output = subprocess.run(f"tc qdisc replace dev {interface} root {QDISC_NAME}".split(" "), capture_output=True, env=env_with_tc)
 		#     print("output", output)
 		vnet.update_hosts()
-		server_popen = hosts[1].Popen("iperf3 -s".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		time.sleep(0.1)
-		client_popen = hosts[0].Popen(f"iperf3 -Z reno -i {delay_to_add/1000} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+		with hosts[0].Popen("ping -c 100 -i 0 host1".split(), stdout=subprocess.PIPE) as ping:
+			ping_output = ping.stdout.read().decode("utf-8").split("\n")
+			ping_output = [float(item.split()[-2][5:]) for item in ping_output if "time=" in item]
+			print("mean rtt", statistics.mean(ping_output))
+
+			# print("ping stdout", ping.stdout.read().decode("utf-8"))
+			# print("ping stderr", ping.stderr.read().decode("utf-8"))
+		return
+
+		server_popen = hosts[1].Popen("iperf3 -4 -s".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		# time.sleep(0.1)
+		client_popen = hosts[0].Popen(f"iperf3 -4 -t 60 -Z reno -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		print("client pid", client_popen.pid)
+		# time.sleep(0.1)
+
+		trace_popen = hosts[0].Popen(f"trace-cmd record -e tcp:tcp_probe -P {client_popen.pid}".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		# trace_popen = hosts[0].Popen(f"trace-cmd record -e tcp:tcp_probe".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+		# tcpdump_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s 96 -i eth0 -w out.pcap".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		out, err = client_popen.communicate()
 		if out:
@@ -110,6 +132,21 @@ def run(vnet):
 			print("server out", out.decode("utf-8"))
 		if err:
 			print("server err", err.decode("utf-8"))
+
+		trace_popen.send_signal(signal.SIGINT)
+		out, err = trace_popen.stdout.read(), trace_popen.stderr.read()
+		if out:
+			print("trace out", out.decode("utf-8"))
+		if err:
+			print("trace err", err.decode("utf-8"))
+
+		# tcpdump_popen.terminate()
+		# out, err = tcpdump_popen.stdout.read(), tcpdump_popen.stderr.read()
+		# if out:
+		# 	print("tcpdump out", out.decode("utf-8"))
+		# if err:
+		# 	print("tcpdump err", err.decode("utf-8"))
+
 		# if out:
 		# 	print("server out", out)
 		# if err:

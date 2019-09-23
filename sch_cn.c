@@ -378,8 +378,8 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 	src_ip = get_ip(ft.src_ip);
 	dst_ip = get_ip(ft.dst_ip);
 	if (ft.transport_protocol == 6) {
-		// printk(KERN_DEBUG "sch_cn: Got new flow: proto=%u, src_port=%u, dst_port=%u!\n", (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
-		printk(KERN_DEBUG "sch_cn: Got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", src_ip.bytes, dst_ip.bytes, (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
+		// trace_printk("sch_cn: Got new flow: proto=%u, src_port=%u, dst_port=%u!\n", (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
+		trace_printk("sch_cn: Got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", src_ip.bytes, dst_ip.bytes, (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
 	}
 	return f;
 }
@@ -804,7 +804,7 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 		sch->limit = nla_get_u32(tb[TCA_FQ_PLIMIT]);
 
 	if (tb[TCA_FQ_FLOW_PLIMIT]) {
-		// printk(KERN_DEBUG "sch_cn: Setting flow_plimit=%u!\n", nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]));
+		// trace_printk("sch_cn: Setting flow_plimit=%u!\n", nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]));
 		q->flow_plimit = nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]);
 	}
 
@@ -885,12 +885,12 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	struct cn_sched_data *q = qdisc_priv(sch);
 	int err;
 
-	// printk(KERN_DEBUG "sch_cn: cn_init called");
+	// trace_printk("sch_cn: cn_init called");
 
 	sch->limit		= 10000;
 	q->flow_plimit		= 100;
 
-	// printk(KERN_DEBUG "sch_cn: MTU=%u!\n", psched_mtu(qdisc_dev(sch)));
+	// trace_printk("sch_cn: MTU=%u!\n", psched_mtu(qdisc_dev(sch)));
 	q->quantum		= 2 * psched_mtu(qdisc_dev(sch));
 	q->initial_quantum	= 10 * psched_mtu(qdisc_dev(sch));
 
@@ -908,7 +908,7 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	qdisc_watchdog_init(&q->watchdog, sch);
 
 	if (opt) {
-		// printk(KERN_DEBUG "sch_cn: Yeah, got options :)");
+		// trace_printk("sch_cn: Yeah, got options :)");
 		err = cn_change(sch, opt, extack);
 	} else
 		err = cn_resize(sch, q->cn_trees_log);
