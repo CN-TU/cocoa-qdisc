@@ -53,6 +53,29 @@
 #include <net/sock.h>
 #include <net/tcp_states.h>
 #include <net/tcp.h>
+#include <linux/limits.h>
+#include <asm/fpu/api.h>
+#include <linux/timekeeping.h>
+
+// How many times the previously longest interval to wait?
+double multiplier = 0.5;
+
+// FIXME: se only u64 because why not. Maybe fix this in the long term...
+struct interval_info {
+	u64 start_ns;
+	u64 end_ns;
+	u64 idle_ns;
+	u64 min_queue_length; // FIXME: everything only works with packets now and not bytes
+	u64 packets_transmitted;
+};
+
+struct five_tuple {
+	u32 src_ip;
+	u32 dst_ip;
+	u16 src_port;
+	u16 dst_port;
+	u8 transport_protocol;
+};
 
 /*
  * Per flow structure, dynamically allocated
@@ -69,17 +92,21 @@ struct cn_flow {
 
 	int		flow_max_qlen;
 
-	unsigned long last_loss_time;
-	unsigned long idle_since_last_time;
-	unsigned long bytes_sent_since_last_time;
-	unsigned long min_queue_size;
-	bool in_startup_phase;
-
 	int		credit;
 	u32		socket_hash;	/* sk_hash */
 	struct cn_flow *next;		/* next pointer in RR lists, or &detached */
 	struct rb_node  rate_node;	/* anchor in q->delayed tree */
 	u64		time_next_packet;
+
+	// Added by Max
+	struct five_tuple ft;
+	struct interval_info longest_interval;
+	struct interval_info current_interval;
+	u64 monitoring_period_start_ns;
+	u64 monitoring_period_end_ns;
+	bool idle;
+	u64 became_idle_ns;
+	u64 enlarge;
 };
 
 struct cn_flow_head {
@@ -121,6 +148,51 @@ struct cn_sched_data {
 	u64		stat_allocation_errors;
 	struct qdisc_watchdog watchdog;
 };
+
+struct ipv4_address {
+	char bytes[32];
+};
+
+struct ipv4_address get_ip(unsigned int ip) {
+		unsigned char bytes[4];
+		struct ipv4_address ip_str;
+		bytes[0] = ip & 0xFF;
+		bytes[1] = (ip >> 8) & 0xFF;
+		bytes[2] = (ip >> 16) & 0xFF;
+		bytes[3] = (ip >> 24) & 0xFF;
+		snprintf(ip_str.bytes, sizeof(ip_str.bytes), "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3]);
+		return ip_str;
+}
+
+static struct five_tuple get_five_tuple_from_skb(struct sk_buff *skb) {
+	struct iphdr *ip_header = (struct iphdr *)skb_network_header(skb);
+	struct udphdr *udp_header;
+	struct tcphdr *tcp_header;
+	struct five_tuple ft;
+	// struct list_head *p;
+
+	unsigned int src_ip = (unsigned int)ip_header->saddr;
+	unsigned int dst_ip = (unsigned int)ip_header->daddr;
+	unsigned int src_port = 0;
+	unsigned int dst_port = 0;
+
+	if (ip_header->protocol==17) {
+					udp_header = (struct udphdr *)skb_transport_header(skb);
+					src_port = (unsigned int)ntohs(udp_header->source);
+	} else if (ip_header->protocol == 6) {
+					tcp_header = (struct tcphdr *)skb_transport_header(skb);
+					src_port = (unsigned int)ntohs(tcp_header->source);
+					dst_port = (unsigned int)ntohs(tcp_header->dest);
+	}
+
+	ft.src_ip=src_ip,
+	ft.dst_ip=dst_ip;
+	ft.src_port=src_port;
+	ft.dst_port=dst_port;
+	ft.transport_protocol=ip_header->protocol;
+
+	return ft;
+}
 
 /* special value to mark a detached flow (not on old/new list) */
 static struct cn_flow detached, throttled;
@@ -182,6 +254,12 @@ static void cn_flow_set_throttled(struct cn_sched_data *q, struct cn_flow *f)
 		q->time_next_delayed_flow = f->time_next_packet;
 }
 
+// Created by Max
+static void cn_copy_longest_interval_if_needed(struct cn_flow *f) {
+	if ((f->current_interval.end_ns - f->current_interval.start_ns) >= (f->longest_interval.end_ns - f->longest_interval.start_ns)) {
+		f->longest_interval = f->current_interval;
+	}
+}
 
 static struct kmem_cache *cn_flow_cachep __read_mostly;
 
@@ -189,18 +267,20 @@ static struct kmem_cache *cn_flow_cachep __read_mostly;
 
 /* limit number of collected flows per round */
 #define CN_GC_MAX 8
+// Changed by Max. Shouldn't be needed though because only when there are sufficient
+// flows GC kicks in
 // #define CN_GC_AGE (3*HZ)
 #define CN_GC_AGE (FLOW_TIMEOUT*HZ)
 
 static bool cn_gc_candidate(const struct cn_flow *f)
 {
 	return cn_flow_is_detached(f) &&
-	       time_after(jiffies, f->age + CN_GC_AGE);
+				 time_after(jiffies, f->age + CN_GC_AGE);
 }
 
 static void cn_gc(struct cn_sched_data *q,
-		  struct rb_root *root,
-		  struct sock *sk)
+			struct rb_root *root,
+			struct sock *sk)
 {
 	struct cn_flow *f, *tofree[CN_GC_MAX];
 	struct rb_node **p, *parent;
@@ -227,6 +307,8 @@ static void cn_gc(struct cn_sched_data *q,
 			p = &parent->rb_left;
 	}
 
+	trace_printk("sch_cn: Garbage collected %u flows!\n", (u32) fcnt);
+
 	q->flows -= fcnt;
 	q->inactive_flows -= fcnt;
 	q->stat_gc_flows += fcnt;
@@ -238,57 +320,23 @@ static void cn_gc(struct cn_sched_data *q,
 	}
 }
 
-struct five_tuple {
-	uint32_t src_ip;
-	uint32_t dst_ip;
-	uint16_t src_port;
-	uint16_t dst_port;
-	uint8_t transport_protocol;
-};
+static void cn_initialize_interval(struct cn_flow *f) {
+	u64 current_ns = ktime_get_ns();
+	f->current_interval.start_ns = current_ns;
+	f->current_interval.end_ns = current_ns;
+	f->current_interval.idle_ns = 0;
+	f->current_interval.min_queue_length = ULONG_MAX;
+	f->current_interval.packets_transmitted = 0;
 
-struct ipv4_address {
-	char bytes[32];
-};
-
-struct ipv4_address get_ip(unsigned int ip) {
-		unsigned char bytes[4];
-		struct ipv4_address ip_str;
-    bytes[0] = ip & 0xFF;
-    bytes[1] = (ip >> 8) & 0xFF;
-    bytes[2] = (ip >> 16) & 0xFF;
-    bytes[3] = (ip >> 24) & 0xFF;
-		snprintf(ip_str.bytes, sizeof(ip_str.bytes), "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3]);
-    return ip_str;
+	cn_copy_longest_interval_if_needed(f);
 }
 
-static struct five_tuple get_five_tuple_from_skb(struct sk_buff *skb) {
-	struct iphdr *ip_header = (struct iphdr *)skb_network_header(skb);
-	struct udphdr *udp_header;
-	struct tcphdr *tcp_header;
-	struct five_tuple ft;
-	// struct list_head *p;
-
-	unsigned int src_ip = (unsigned int)ip_header->saddr;
-	unsigned int dst_ip = (unsigned int)ip_header->daddr;
-	unsigned int src_port = 0;
-	unsigned int dst_port = 0;
-
-	if (ip_header->protocol==17) {
-					udp_header = (struct udphdr *)skb_transport_header(skb);
-					src_port = (unsigned int)ntohs(udp_header->source);
-	} else if (ip_header->protocol == 6) {
-					tcp_header = (struct tcphdr *)skb_transport_header(skb);
-					src_port = (unsigned int)ntohs(tcp_header->source);
-					dst_port = (unsigned int)ntohs(tcp_header->dest);
-	}
-
-	ft.src_ip=src_ip,
-	ft.dst_ip=dst_ip;
-	ft.src_port=src_port;
-	ft.dst_port=dst_port;
-	ft.transport_protocol=ip_header->protocol;
-
-	return ft;
+static void cn_initialize_monitoring_interval(struct cn_flow *f) {
+	u64 current_ns = ktime_get_ns();
+	f->monitoring_period_start_ns = current_ns;
+	f->monitoring_period_end_ns = current_ns;
+	f->became_idle_ns = 0;
+	f->idle = false;
 }
 
 static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
@@ -298,8 +346,6 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 	struct rb_root *root;
 	struct cn_flow *f;
 	struct five_tuple ft;
-	struct ipv4_address src_ip;
-	struct ipv4_address dst_ip;
 
 	/* warning: no starvation prevention... */
 	if (unlikely((skb->priority & TC_PRIO_MAX) == TC_PRIO_CONTROL))
@@ -327,7 +373,7 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 	root = &q->cn_root[hash_ptr(sk, q->cn_trees_log)];
 
 	if (q->flows >= (2U << q->cn_trees_log) &&
-	    q->inactive_flows > q->flows/2)
+			q->inactive_flows > q->flows/2)
 		cn_gc(q, root, sk);
 
 	p = &root->rb_node;
@@ -343,7 +389,7 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 			 * initial quantum
 			 */
 			if (unlikely(skb->sk &&
-				     f->socket_hash != sk->sk_hash)) {
+						 f->socket_hash != sk->sk_hash)) {
 				f->credit = q->initial_quantum;
 				f->socket_hash = sk->sk_hash;
 				if (cn_flow_is_throttled(f))
@@ -375,12 +421,19 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 	q->flows++;
 	q->inactive_flows++;
 	ft = get_five_tuple_from_skb(skb);
-	src_ip = get_ip(ft.src_ip);
-	dst_ip = get_ip(ft.dst_ip);
+	f->ft = ft;
+
 	if (ft.transport_protocol == 6) {
-		// trace_printk("sch_cn: Got new flow: proto=%u, src_port=%u, dst_port=%u!\n", (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
-		trace_printk("sch_cn: Got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", src_ip.bytes, dst_ip.bytes, (uint32_t) ft.transport_protocol, (uint32_t) ft.src_port, (uint32_t) ft.dst_port);
+		struct ipv4_address src_ip = get_ip(ft.src_ip);
+		struct ipv4_address dst_ip = get_ip(ft.dst_ip);
+		trace_printk("sch_cn: Got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
 	}
+
+	cn_initialize_monitoring_interval(f);
+	cn_initialize_interval(f);
+	f->longest_interval = f->current_interval;
+	f->enlarge = false;
+	f->flow_max_qlen = (u32) q->flow_plimit;
 	return f;
 }
 
@@ -394,7 +447,13 @@ static struct sk_buff *cn_dequeue_head(struct Qdisc *sch, struct cn_flow *flow)
 		flow->head = skb->next;
 		skb->next = NULL;
 		flow->qlen--;
+		flow->current_interval.packets_transmitted++;
+		if (flow->qlen <= 0) {
+			flow->idle = true;
+			flow->became_idle_ns = ktime_get_ns();
+		}
 		qdisc_qstats_backlog_dec(sch, skb);
+		flow->current_interval.min_queue_length = min(flow->current_interval.min_queue_length, (u64) flow->qlen);
 		sch->q.qlen--;
 	}
 	return skb;
@@ -458,22 +517,125 @@ static void flow_queue_add(struct cn_flow *flow, struct sk_buff *skb)
 	}
 }
 
+static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struct sk_buff **to_free) {
+	u64 number = f->longest_interval.min_queue_length;
+	size_t i;
+	u64 good_ones = f->qlen - number-1;
+	struct sk_buff *current_skb = f->head;
+	struct sk_buff *superfluous_skb;
+	for (i=0; i < good_ones; i++) {
+		current_skb = current_skb->next;
+	}
+	f->tail = current_skb;
+	superfluous_skb = current_skb->next;
+	while (superfluous_skb != NULL) {
+		qdisc_drop(superfluous_skb, sch, to_free);
+		superfluous_skb = superfluous_skb->next;
+	}
+	current_skb->next = NULL;
+	f->qlen -= number;
+	sch->q.qlen -= number;
+	f->flow_max_qlen -= number;
+	if (f->ft.transport_protocol == 6) {
+		trace_printk("sch_cn: 	Dropped %llu packets!\n", number);
+	}
+	if (f->flow_max_qlen <= 0) {
+		printk("sch_cn: Oh no, f->flow_max_qlen=%d\n", f->flow_max_qlen);
+	}
+}
+
+static void cn_compute_and_set_new_monitoring_interval(struct cn_flow *f) {
+	kernel_fpu_begin();
+	f->monitoring_period_end_ns = (u64) (ktime_get_ns() + (u64) (((double) (f->longest_interval.end_ns - f->longest_interval.start_ns))*multiplier));
+	kernel_fpu_end();
+}
+
 static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
-		      struct sk_buff **to_free)
+					struct sk_buff **to_free)
 {
 	struct cn_sched_data *q = qdisc_priv(sch);
 	struct cn_flow *f;
+	struct five_tuple ft;
 
 	if (unlikely(sch->q.qlen >= sch->limit))
 		return qdisc_drop(skb, sch, to_free);
 
 	f = cn_classify(skb, q);
-	if (unlikely(f->qlen >= q->flow_plimit && f != &q->internal)) {
+	if (unlikely(f->qlen >= f->flow_max_qlen && f != &q->internal)) {
+		ft = f->ft;
+		if (ft.transport_protocol == 6) {
+			struct ipv4_address src_ip = get_ip(ft.src_ip);
+			struct ipv4_address dst_ip = get_ip(ft.dst_ip);
+			trace_printk("sch_cn: Queue (%d packets) full for flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", f->flow_max_qlen, src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
+		}
+		// FIXME: This stat should probably be moved?
 		q->stat_flows_plimit++;
-		return qdisc_drop(skb, sch, to_free);
+		// Added by Max
+		// After the first packet loss just start the first monitoring interval.
+		// Also, if the buffer was enlarged, just start a new monitoring interval.
+		if (f->current_interval.idle_ns > 0 && !f->enlarge && f->monitoring_period_start_ns!=f->monitoring_period_end_ns) {
+			u64 idle_interval;
+			u64 active_interval;
+			idle_interval = f->current_interval.idle_ns;
+			active_interval = (ktime_get_ns() - f->current_interval.start_ns) - idle_interval;
+			if (ft.transport_protocol == 6) {
+				trace_printk("sch_cn: 	Got idle ns: %llu, active ns: %llu, packets transmitted: %llu; enlarging buffer! ", idle_interval, active_interval, f->current_interval.packets_transmitted);
+			}
+			f->enlarge = true;
+			kernel_fpu_begin();
+			// TODO: This is not optimal as it doesn't consider other flows...
+			f->flow_max_qlen += (int) (((double) f->current_interval.packets_transmitted)/active_interval*idle_interval);
+			kernel_fpu_end();
+			if (ft.transport_protocol == 6) {
+				trace_printk("New queue length is %d!\n!", f->flow_max_qlen);
+			}
+		} else {
+			if (f->monitoring_period_start_ns==f->monitoring_period_end_ns || f->enlarge) {
+				if (ft.transport_protocol == 6) {
+					trace_printk("sch_cn: 	Simply starting a new monitoring interval!\n");
+				}
+				f->current_interval.end_ns = ktime_get_ns();
+				f->longest_interval = f->current_interval;
+				// cn_copy_longest_interval_if_needed(f);
+				cn_initialize_monitoring_interval(f);
+				cn_compute_and_set_new_monitoring_interval(f);
+				cn_initialize_interval(f);
+				f->longest_interval = f->current_interval;
+				f->enlarge = false;
+				return qdisc_drop(skb, sch, to_free);
+			} else if (ktime_get_ns() > f->monitoring_period_end_ns) {
+				f->current_interval.end_ns = ktime_get_ns();
+				cn_copy_longest_interval_if_needed(f);
+				if (f->longest_interval.min_queue_length > 0) {
+					cn_drop_packets_from_end(f, sch, to_free);
+				}
+				if (ft.transport_protocol == 6) {
+					trace_printk("sch_cn: 	Monitoring period is over and no idle ns! New queue length is %d!\n", f->flow_max_qlen);
+				}
+				cn_initialize_monitoring_interval(f);
+				cn_compute_and_set_new_monitoring_interval(f);
+				cn_initialize_interval(f);
+				f->longest_interval = f->current_interval;
+				return qdisc_drop(skb, sch, to_free);
+			} else {
+				if (ft.transport_protocol == 6) {
+					trace_printk("sch_cn: 	Packet lost during monitoring period... Business as usual!\n");
+				}
+				f->current_interval.end_ns = ktime_get_ns();
+				cn_copy_longest_interval_if_needed(f);
+				cn_initialize_interval(f);
+				return qdisc_drop(skb, sch, to_free);
+			}
+		}
 	}
 
 	f->qlen++;
+
+	if (f->idle) {
+		f->idle = false;
+		f->current_interval.idle_ns += ktime_get_ns() - f->became_idle_ns;
+	}
+
 	if (skb_is_retransmit(skb))
 		q->stat_tcp_retrans++;
 	qdisc_qstats_backlog_inc(sch, skb);
@@ -485,11 +647,13 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 			f->credit = max_t(u32, f->credit, q->quantum);
 		if (sk && q->rate_enable) {
 			if (unlikely(smp_load_acquire(&sk->sk_pacing_status) !=
-				     SK_PACING_FQ))
+						 SK_PACING_FQ))
 				smp_store_release(&sk->sk_pacing_status,
-						  SK_PACING_FQ);
+							SK_PACING_FQ);
 		}
 		q->inactive_flows--;
+		// Changed by Max. Apparently flows can be idle but not detached.
+		// f->current_interval.idle_ns += jiffies - f->age;
 	}
 
 	/* Note: this overwrites f->age */
@@ -550,7 +714,7 @@ begin:
 		if (!head->first) {
 			if (q->time_next_delayed_flow != ~0ULL)
 				qdisc_watchdog_schedule_ns(&q->watchdog,
-							   q->time_next_delayed_flow);
+								 q->time_next_delayed_flow);
 			return NULL;
 		}
 	}
@@ -565,7 +729,7 @@ begin:
 
 	skb = f->head;
 	if (unlikely(skb && now < f->time_next_packet &&
-		     !skb_is_tcp_pure_ack(skb))) {
+				 !skb_is_tcp_pure_ack(skb))) {
 		head->first = f->next;
 		cn_flow_set_throttled(q, f);
 		goto begin;
@@ -674,8 +838,8 @@ static void cn_reset(struct Qdisc *sch)
 }
 
 static void cn_rehash(struct cn_sched_data *q,
-		      struct rb_root *old_array, u32 old_log,
-		      struct rb_root *new_array, u32 new_log)
+					struct rb_root *old_array, u32 old_log,
+					struct rb_root *new_array, u32 new_log)
 {
 	struct rb_node *op, **np, *parent;
 	struct rb_root *oroot, *nroot;
@@ -735,7 +899,7 @@ static int cn_resize(struct Qdisc *sch, u32 log)
 
 	/* If XPS was setup, we can allocate memory on right NUMA node */
 	array = kvmalloc_node(sizeof(struct rb_root) << log, GFP_KERNEL | __GFP_RETRY_MAYFAIL,
-			      netdev_queue_numa_node_read(sch->dev_queue));
+						netdev_queue_numa_node_read(sch->dev_queue));
 	if (!array)
 		return -ENOMEM;
 
@@ -772,7 +936,7 @@ static const struct nla_policy cn_policy[TCA_FQ_MAX + 1] = {
 };
 
 static int cn_change(struct Qdisc *sch, struct nlattr *opt,
-		     struct netlink_ext_ack *extack)
+				 struct netlink_ext_ack *extack)
 {
 	struct cn_sched_data *q = qdisc_priv(sch);
 	struct nlattr *tb[TCA_FQ_MAX + 1];
@@ -822,7 +986,7 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (tb[TCA_FQ_FLOW_DEFAULT_RATE])
 		pr_warn_ratelimited("sch_cn: defrate %u ignored.\n",
-				    nla_get_u32(tb[TCA_FQ_FLOW_DEFAULT_RATE]));
+						nla_get_u32(tb[TCA_FQ_FLOW_DEFAULT_RATE]));
 
 	if (tb[TCA_FQ_FLOW_MAX_RATE])
 		q->flow_max_rate = nla_get_u32(tb[TCA_FQ_FLOW_MAX_RATE]);
@@ -879,7 +1043,7 @@ static void cn_destroy(struct Qdisc *sch)
 }
 
 static int cn_init(struct Qdisc *sch, struct nlattr *opt,
-		   struct netlink_ext_ack *extack)
+			 struct netlink_ext_ack *extack)
 {
 
 	struct cn_sched_data *q = qdisc_priv(sch);
@@ -890,7 +1054,7 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	sch->limit		= 10000;
 	q->flow_plimit		= 100;
 
-	// trace_printk("sch_cn: MTU=%u!\n", psched_mtu(qdisc_dev(sch)));
+	trace_printk("sch_cn: Launching qdisc; MTU=%u!\n", psched_mtu(qdisc_dev(sch)));
 	q->quantum		= 2 * psched_mtu(qdisc_dev(sch));
 	q->initial_quantum	= 10 * psched_mtu(qdisc_dev(sch));
 
@@ -928,17 +1092,17 @@ static int cn_dump(struct Qdisc *sch, struct sk_buff *skb)
 	/* TCA_FQ_FLOW_DEFAULT_RATE is not used anymore */
 
 	if (nla_put_u32(skb, TCA_FQ_PLIMIT, sch->limit) ||
-	    nla_put_u32(skb, TCA_FQ_FLOW_PLIMIT, q->flow_plimit) ||
-	    nla_put_u32(skb, TCA_FQ_QUANTUM, q->quantum) ||
-	    nla_put_u32(skb, TCA_FQ_INITIAL_QUANTUM, q->initial_quantum) ||
-	    nla_put_u32(skb, TCA_FQ_RATE_ENABLE, q->rate_enable) ||
-	    nla_put_u32(skb, TCA_FQ_FLOW_MAX_RATE, q->flow_max_rate) ||
-	    nla_put_u32(skb, TCA_FQ_FLOW_REFILL_DELAY,
+			nla_put_u32(skb, TCA_FQ_FLOW_PLIMIT, q->flow_plimit) ||
+			nla_put_u32(skb, TCA_FQ_QUANTUM, q->quantum) ||
+			nla_put_u32(skb, TCA_FQ_INITIAL_QUANTUM, q->initial_quantum) ||
+			nla_put_u32(skb, TCA_FQ_RATE_ENABLE, q->rate_enable) ||
+			nla_put_u32(skb, TCA_FQ_FLOW_MAX_RATE, q->flow_max_rate) ||
+			nla_put_u32(skb, TCA_FQ_FLOW_REFILL_DELAY,
 			jiffies_to_usecs(q->flow_refill_delay)) ||
-	    nla_put_u32(skb, TCA_FQ_ORPHAN_MASK, q->orphan_mask) ||
-	    nla_put_u32(skb, TCA_FQ_LOW_RATE_THRESHOLD,
+			nla_put_u32(skb, TCA_FQ_ORPHAN_MASK, q->orphan_mask) ||
+			nla_put_u32(skb, TCA_FQ_LOW_RATE_THRESHOLD,
 			q->low_rate_threshold) ||
-	    nla_put_u32(skb, TCA_FQ_BUCKETS_LOG, q->cn_trees_log))
+			nla_put_u32(skb, TCA_FQ_BUCKETS_LOG, q->cn_trees_log))
 		goto nla_put_failure;
 
 	return nla_nest_end(skb, opts);
@@ -966,7 +1130,7 @@ static int cn_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
 	st.inactive_flows	  = q->inactive_flows;
 	st.throttled_flows	  = q->throttled_flows;
 	st.unthrottle_latency_ns  = min_t(unsigned long,
-					  q->unthrottle_latency_ns, ~0U);
+						q->unthrottle_latency_ns, ~0U);
 	sch_tree_unlock(sch);
 
 	return gnet_stats_copy_app(d, &st, sizeof(st));
@@ -993,8 +1157,8 @@ static int __init cn_module_init(void)
 	int ret;
 
 	cn_flow_cachep = kmem_cache_create("cn_flow_cache",
-					   sizeof(struct cn_flow),
-					   0, 0, NULL);
+						 sizeof(struct cn_flow),
+						 0, 0, NULL);
 	if (!cn_flow_cachep)
 		return -ENOMEM;
 

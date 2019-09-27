@@ -36,13 +36,15 @@ delay_to_add = 10
 rate = 100
 # Bytes, obviously
 MTU = 1514
+TIME = 60
 QDISC_NAME = "cn"
 #             Mbit/s       ms                bytes
 BDP_packets = rate*1000000*delay_to_add/1000/(MTU*8)
-# Just for fun...
-BDP_packets *= 0.5
-# BDP_packets = 1
 print("BDP_packets", BDP_packets)
+# Just for fun...
+BDP_packets *= 0.2
+# BDP_packets = 1
+print("actual packets", BDP_packets)
 # quit()
 
 def run_commands(cmds, Popen=False):
@@ -55,7 +57,7 @@ def run_commands(cmds, Popen=False):
 		else:
 			kwargs = {}
 		try:
-			print("cmd", cmd, "kwargs", kwargs)
+			print("cmd", cmd)#, "kwargs", kwargs)
 			if not Popen:
 				output = subprocess.run(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True, **kwargs)
 				# print("output", output)
@@ -102,6 +104,7 @@ def run(vnet):
 		for i in range(2):
 			host = vnet.Host("host{}".format(i))
 			host.connect(vnet.VirtualLink, switch, "eth0")
+			# print("switch.interfaces", switch.interfaces)
 			host["eth0"].add_ip(network)
 			execute_popen_and_show_result("ethtool -K eth0 gro off", host)
 			execute_popen_and_show_result("ethtool -K eth0 gso off", host)
@@ -114,14 +117,17 @@ def run(vnet):
 
 		# print("switch.interfaces", switch.interfaces)
 		for interface in switch.interfaces:
+			print("interface", interface)
+			# continue
 			execute_popen_and_show_result(f"ethtool -K {interface} gro off")
 			execute_popen_and_show_result(f"ethtool -K {interface} gso off")
 			execute_popen_and_show_result(f"ethtool -K {interface} tso off")
 
-			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {QDISC_NAME} nopacing flow_limit {int(math.ceil(BDP_packets))}", {"env": env_with_tc})])
+			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {QDISC_NAME if interface=='host10' else 'fq'} nopacing quantum 3028 initial_quantum 3028 flow_limit {int(math.ceil(BDP_packets))}", {"env": env_with_tc})])
 			# run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb rate {}mbit ceil {}mbit".format(interface, rate, rate), ("tc qdisc add dev {} parent 2:21 handle 3: {}".format(interface, QDISC_NAME), {"env": env_with_tc})])
 		#     # output = subprocess.run(f"tc qdisc replace dev {interface} root {QDISC_NAME}".split(" "), capture_output=True, env=env_with_tc)
 		#     print("output", output)
+		# quit()
 		vnet.update_hosts()
 
 		with hosts[0].Popen("ping -c 100 -i 0 host1".split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as ping:
@@ -131,14 +137,14 @@ def run(vnet):
 
 		server_popen = hosts[1].Popen("iperf3 -4 -s".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s 96 -i eth0 -w sender.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s 96 -i eth0 -w receiver.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s 66 -i eth0 -w sender.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s 66 -i eth0 -w receiver.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-		tcpdump_switch_popens = []
-		for interface_name in switch.interfaces.keys():
-			tcpdump_switch_popens.append(subprocess.Popen(f"/usr/sbin/tcpdump -s 96 -i {interface_name} -w switch_{interface_name}.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+		# tcpdump_switch_popens = []
+		# for interface_name in switch.interfaces.keys():
+		# 	tcpdump_switch_popens.append(subprocess.Popen(f"/usr/sbin/tcpdump -s 96 -i {interface_name} -w switch_{interface_name}.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
-		client_popen = hosts[0].Popen(f"iperf3 -4 -C reno --cport {cport} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		client_popen = hosts[0].Popen(f"iperf3 -4 -t {TIME} -C reno --cport {cport} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		print("client pid", client_popen.pid)
 		# time.sleep(0.1)
 
@@ -179,13 +185,13 @@ def run(vnet):
 		if err:
 			print("tcpdump err", err.decode("utf-8"))
 
-		for index, interface_name in enumerate(switch.interfaces.keys()):
-			tcpdump_switch_popens[index].terminate()
-			out, err = tcpdump_switch_popens[index].stdout.read(), tcpdump_switch_popens[index].stderr.read()
-			if out:
-				print(f"{interface_name} out", out.decode("utf-8"))
-			if err:
-				print(f"{interface_name} err", err.decode("utf-8"))
+		# for index, interface_name in enumerate(switch.interfaces.keys()):
+		# 	tcpdump_switch_popens[index].terminate()
+		# 	out, err = tcpdump_switch_popens[index].stdout.read(), tcpdump_switch_popens[index].stderr.read()
+		# 	if out:
+		# 		print(f"{interface_name} out", out.decode("utf-8"))
+		# 	if err:
+		# 		print(f"{interface_name} err", err.decode("utf-8"))
 
 		# if out:
 		# 	print("server out", out)
