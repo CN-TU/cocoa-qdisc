@@ -29,6 +29,7 @@ import statistics
 # NUMPING = 1000
 
 # Client port
+bytes_to_capture = 76
 cport = 60000
 # milliseconds
 delay_to_add = 10
@@ -137,8 +138,8 @@ def run(vnet):
 
 		server_popen = hosts[1].Popen("iperf3 -4 -s".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s 66 -i eth0 -w sender.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s 66 -i eth0 -w receiver.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s {bytes_to_capture} -i eth0 -w sender.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s {bytes_to_capture} -i eth0 -w receiver.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		# tcpdump_switch_popens = []
 		# for interface_name in switch.interfaces.keys():
