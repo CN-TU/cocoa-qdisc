@@ -29,7 +29,7 @@ import statistics
 # NUMPING = 1000
 
 # Client port
-bytes_to_capture = 76
+bytes_to_capture = 100
 cport = 60000
 # milliseconds
 delay_to_add = 10
@@ -39,6 +39,7 @@ rate = 100
 MTU = 1514
 TIME = 60
 QDISC_NAME = "cn"
+CC="reno"
 #             Mbit/s       ms                bytes
 BDP_packets = rate*1000000*delay_to_add/1000/(MTU*8)
 print("BDP_packets", BDP_packets)
@@ -124,7 +125,7 @@ def run(vnet):
 			execute_popen_and_show_result(f"ethtool -K {interface} gso off")
 			execute_popen_and_show_result(f"ethtool -K {interface} tso off")
 
-			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {QDISC_NAME if interface=='host10' else 'fq'} nopacing quantum 3028 initial_quantum 3028 flow_limit {int(math.ceil(BDP_packets))}", {"env": env_with_tc})])
+			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {QDISC_NAME if interface=='host10' else 'fq'} nopacing quantum 3028 initial_quantum 3028{f' flow_limit {int(math.ceil(BDP_packets))}' if interface=='host10' else ''}", {"env": env_with_tc})])
 			# run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb rate {}mbit ceil {}mbit".format(interface, rate, rate), ("tc qdisc add dev {} parent 2:21 handle 3: {}".format(interface, QDISC_NAME), {"env": env_with_tc})])
 		#     # output = subprocess.run(f"tc qdisc replace dev {interface} root {QDISC_NAME}".split(" "), capture_output=True, env=env_with_tc)
 		#     print("output", output)
@@ -136,7 +137,7 @@ def run(vnet):
 			ping_output = [float(item.split()[-2][5:]) for item in ping_output if "time=" in item]
 			print("mean rtt", statistics.mean(ping_output))
 
-		server_popen = hosts[1].Popen("iperf3 -4 -s".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		server_popen = hosts[1].Popen("iperf3 -V -4 -s".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s {bytes_to_capture} -i eth0 -w sender.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s {bytes_to_capture} -i eth0 -w receiver.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -145,7 +146,8 @@ def run(vnet):
 		# for interface_name in switch.interfaces.keys():
 		# 	tcpdump_switch_popens.append(subprocess.Popen(f"/usr/sbin/tcpdump -s 96 -i {interface_name} -w switch_{interface_name}.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
-		client_popen = hosts[0].Popen(f"iperf3 -4 -t {TIME} -C reno --cport {cport} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		# client_popen = hosts[0].Popen(f"iperf3 -w 10M -V -4 -t {TIME} -C {CC} --cport {cport} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		client_popen = hosts[0].Popen(f"iperf3 -w 50M -V -4 -t {TIME} -C {CC} --cport {cport} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		print("client pid", client_popen.pid)
 		# time.sleep(0.1)
 

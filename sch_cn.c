@@ -59,6 +59,12 @@
 
 // How many times the previously longest interval to wait?
 double multiplier = 0.5;
+double maximum_change = 2.0;
+
+static u64 seconds_from_ns(u64 ns) {
+	u64 current_ns = ktime_get_ns();
+	return (current_ns-ns)/1000000000;
+}
 
 // FIXME: se only u64 because why not. Maybe fix this in the long term...
 struct interval_info {
@@ -99,6 +105,7 @@ struct cn_flow {
 	u64		time_next_packet;
 
 	// Added by Max
+	u64 flow_start_ns;
 	struct five_tuple ft;
 	struct interval_info longest_interval;
 	struct interval_info current_interval;
@@ -307,13 +314,12 @@ static void cn_gc(struct cn_sched_data *q,
 			p = &parent->rb_left;
 	}
 
-	trace_printk("sch_cn: Garbage collected %u flows!\n", (u32) fcnt);
-
 	q->flows -= fcnt;
 	q->inactive_flows -= fcnt;
 	q->stat_gc_flows += fcnt;
 	while (fcnt) {
 		struct cn_flow *f = tofree[--fcnt];
+		trace_printk("sch_cn: At %llu, Garbage collected %u flows!\n", seconds_from_ns(f->flow_start_ns), (u32) fcnt);
 
 		rb_erase(&f->cn_node, root);
 		kmem_cache_free(cn_flow_cachep, f);
@@ -423,10 +429,11 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 	ft = get_five_tuple_from_skb(skb);
 	f->ft = ft;
 
+	f->flow_start_ns = ktime_get_ns();
 	if (ft.transport_protocol == 6) {
 		struct ipv4_address src_ip = get_ip(ft.src_ip);
 		struct ipv4_address dst_ip = get_ip(ft.dst_ip);
-		trace_printk("sch_cn: Got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
+		trace_printk("sch_cn: At %llu, got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", seconds_from_ns(f->flow_start_ns), src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
 	}
 
 	cn_initialize_monitoring_interval(f);
@@ -520,27 +527,40 @@ static void flow_queue_add(struct cn_flow *flow, struct sk_buff *skb)
 static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struct sk_buff **to_free) {
 	u64 number = f->longest_interval.min_queue_length;
 	size_t i;
-	u64 good_ones = f->qlen - number-1;
+	u64 good_ones = f->qlen - number - 1;
 	struct sk_buff *current_skb = f->head;
 	struct sk_buff *superfluous_skb;
+	struct sk_buff *next_superfluous_skb;
+	size_t counter = 1;
+	size_t drop_counter = 0;
 	for (i=0; i < good_ones; i++) {
 		current_skb = current_skb->next;
 	}
 	f->tail = current_skb;
 	superfluous_skb = current_skb->next;
 	while (superfluous_skb != NULL) {
+		next_superfluous_skb = superfluous_skb->next;
 		qdisc_drop(superfluous_skb, sch, to_free);
-		superfluous_skb = superfluous_skb->next;
+		superfluous_skb = next_superfluous_skb;
+		drop_counter++;
 	}
 	current_skb->next = NULL;
 	f->qlen -= number;
 	sch->q.qlen -= number;
 	f->flow_max_qlen -= number;
 	if (f->ft.transport_protocol == 6) {
-		trace_printk("sch_cn: 	Dropped %llu packets!\n", number);
+		trace_printk("sch_cn: 	At %llu, Dropped %llu packets, drop_counter=%lu!\n", seconds_from_ns(f->flow_start_ns), number, drop_counter);
 	}
 	if (f->flow_max_qlen <= 0) {
-		printk("sch_cn: Oh no, f->flow_max_qlen=%d\n", f->flow_max_qlen);
+		printk("sch_cn: At %llu, Oh no, f->flow_max_qlen=%d\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
+	}
+	current_skb = f->head;
+	while (current_skb != NULL) {
+		counter++;
+		current_skb = current_skb->next;
+	}
+	if (f->flow_max_qlen != counter) {
+		printk("sch_cn: At %llu, Oh no, f->flow_max_qlen=%d!=counter=%lu\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen, counter);
 	}
 }
 
@@ -566,12 +586,11 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 		if (ft.transport_protocol == 6) {
 			struct ipv4_address src_ip = get_ip(ft.src_ip);
 			struct ipv4_address dst_ip = get_ip(ft.dst_ip);
-			trace_printk("sch_cn: Queue (%d packets) full for flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", f->flow_max_qlen, src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
+			trace_printk("sch_cn: At %llu, Queue (%d, max %d packets) full for flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", seconds_from_ns(f->flow_start_ns), f->qlen, f->flow_max_qlen, src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
 		}
 		// FIXME: This stat should probably be moved?
 		q->stat_flows_plimit++;
 		// Added by Max
-		// After the first packet loss just start the first monitoring interval.
 		// Also, if the buffer was enlarged, just start a new monitoring interval.
 		if (f->current_interval.idle_ns > 0 && !f->enlarge && f->monitoring_period_start_ns!=f->monitoring_period_end_ns) {
 			u64 idle_interval;
@@ -579,7 +598,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 			idle_interval = f->current_interval.idle_ns;
 			active_interval = (ktime_get_ns() - f->current_interval.start_ns) - idle_interval;
 			if (ft.transport_protocol == 6) {
-				trace_printk("sch_cn: 	Got idle ns: %llu, active ns: %llu, packets transmitted: %llu; enlarging buffer! ", idle_interval, active_interval, f->current_interval.packets_transmitted);
+				trace_printk("sch_cn: 	At %llu, Got idle ns: %llu, active ns: %llu, packets transmitted: %llu; enlarging buffer!\n", seconds_from_ns(f->flow_start_ns), idle_interval, active_interval, f->current_interval.packets_transmitted);
 			}
 			f->enlarge = true;
 			kernel_fpu_begin();
@@ -587,12 +606,12 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 			f->flow_max_qlen += (int) (((double) f->current_interval.packets_transmitted)/active_interval*idle_interval);
 			kernel_fpu_end();
 			if (ft.transport_protocol == 6) {
-				trace_printk("New queue length is %d!\n!", f->flow_max_qlen);
+				trace_printk("sch_cn: 	At %llu, New queue length is %d!\n!", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
 			}
 		} else {
 			if (f->monitoring_period_start_ns==f->monitoring_period_end_ns || f->enlarge) {
 				if (ft.transport_protocol == 6) {
-					trace_printk("sch_cn: 	Simply starting a new monitoring interval!\n");
+					trace_printk("sch_cn: 	At %llu, Simply starting a new monitoring interval!\n", seconds_from_ns(f->flow_start_ns));
 				}
 				f->current_interval.end_ns = ktime_get_ns();
 				f->longest_interval = f->current_interval;
@@ -610,7 +629,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 					cn_drop_packets_from_end(f, sch, to_free);
 				}
 				if (ft.transport_protocol == 6) {
-					trace_printk("sch_cn: 	Monitoring period is over and no idle ns! New queue length is %d!\n", f->flow_max_qlen);
+					trace_printk("sch_cn: 	At %llu, Monitoring period is over and no idle ns! New queue length is %d, max is %d!\n", seconds_from_ns(f->flow_start_ns),  f->qlen, f->flow_max_qlen);
 				}
 				cn_initialize_monitoring_interval(f);
 				cn_compute_and_set_new_monitoring_interval(f);
@@ -619,7 +638,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 				return qdisc_drop(skb, sch, to_free);
 			} else {
 				if (ft.transport_protocol == 6) {
-					trace_printk("sch_cn: 	Packet lost during monitoring period... Business as usual!\n");
+					trace_printk("sch_cn: 	At %llu, Packet lost during monitoring period... Business as usual!\n", seconds_from_ns(f->flow_start_ns));
 				}
 				f->current_interval.end_ns = ktime_get_ns();
 				cn_copy_longest_interval_if_needed(f);
@@ -968,7 +987,6 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 		sch->limit = nla_get_u32(tb[TCA_FQ_PLIMIT]);
 
 	if (tb[TCA_FQ_FLOW_PLIMIT]) {
-		// trace_printk("sch_cn: Setting flow_plimit=%u!\n", nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]));
 		q->flow_plimit = nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]);
 	}
 
@@ -1049,8 +1067,6 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	struct cn_sched_data *q = qdisc_priv(sch);
 	int err;
 
-	// trace_printk("sch_cn: cn_init called");
-
 	sch->limit		= 10000;
 	q->flow_plimit		= 100;
 
@@ -1072,7 +1088,6 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	qdisc_watchdog_init(&q->watchdog, sch);
 
 	if (opt) {
-		// trace_printk("sch_cn: Yeah, got options :)");
 		err = cn_change(sch, opt, extack);
 	} else
 		err = cn_resize(sch, q->cn_trees_log);
