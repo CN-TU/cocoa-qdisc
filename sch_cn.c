@@ -57,9 +57,12 @@
 #include <asm/fpu/api.h>
 #include <linux/timekeeping.h>
 
+// Added by max
+#include "iproute2/tc/cn_opts.h"
+
 // How many times the previously longest interval to wait?
-double multiplier = 0.5;
-double maximum_change = 2.0;
+// double guard_interval = 0.5;
+// double maximum_change = 2.0;
 
 static u64 seconds_from_ns(u64 ns) {
 	u64 current_ns = ktime_get_ns();
@@ -154,6 +157,9 @@ struct cn_sched_data {
 	u64		stat_pkts_too_long;
 	u64		stat_allocation_errors;
 	struct qdisc_watchdog watchdog;
+
+	// Added by Max;
+	double guard_interval;
 };
 
 struct ipv4_address {
@@ -531,7 +537,7 @@ static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struc
 	struct sk_buff *current_skb = f->head;
 	struct sk_buff *superfluous_skb;
 	struct sk_buff *next_superfluous_skb;
-	size_t counter = 1;
+	size_t counter = 0;
 	size_t drop_counter = 0;
 	for (i=0; i < good_ones; i++) {
 		current_skb = current_skb->next;
@@ -552,7 +558,7 @@ static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struc
 		trace_printk("sch_cn: 	At %llu, Dropped %llu packets, drop_counter=%lu!\n", seconds_from_ns(f->flow_start_ns), number, drop_counter);
 	}
 	if (f->flow_max_qlen <= 0) {
-		printk("sch_cn: At %llu, Oh no, f->flow_max_qlen=%d\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
+		trace_printk("sch_cn: At %llu, Oh no, f->flow_max_qlen=%d\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
 	}
 	current_skb = f->head;
 	while (current_skb != NULL) {
@@ -560,13 +566,13 @@ static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struc
 		current_skb = current_skb->next;
 	}
 	if (f->flow_max_qlen != counter) {
-		printk("sch_cn: At %llu, Oh no, f->flow_max_qlen=%d!=counter=%lu\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen, counter);
-	}
+		trace_printk("sch_cn: At %llu, Oh no, f->flow_max_qlen=%d!=counter=%lu\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen, counter);
+}
 }
 
-static void cn_compute_and_set_new_monitoring_interval(struct cn_flow *f) {
+static void cn_compute_and_set_new_monitoring_interval(struct cn_sched_data *q, struct cn_flow *f) {
 	kernel_fpu_begin();
-	f->monitoring_period_end_ns = (u64) (ktime_get_ns() + (u64) (((double) (f->longest_interval.end_ns - f->longest_interval.start_ns))*multiplier));
+	f->monitoring_period_end_ns = (u64) (ktime_get_ns() + (u64) (((double) (f->longest_interval.end_ns - f->longest_interval.start_ns)) * (q->guard_interval)));
 	kernel_fpu_end();
 }
 
@@ -617,7 +623,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 				f->longest_interval = f->current_interval;
 				// cn_copy_longest_interval_if_needed(f);
 				cn_initialize_monitoring_interval(f);
-				cn_compute_and_set_new_monitoring_interval(f);
+				cn_compute_and_set_new_monitoring_interval(q, f);
 				cn_initialize_interval(f);
 				f->longest_interval = f->current_interval;
 				f->enlarge = false;
@@ -632,7 +638,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 					trace_printk("sch_cn: 	At %llu, Monitoring period is over and no idle ns! New queue length is %d, max is %d!\n", seconds_from_ns(f->flow_start_ns),  f->qlen, f->flow_max_qlen);
 				}
 				cn_initialize_monitoring_interval(f);
-				cn_compute_and_set_new_monitoring_interval(f);
+				cn_compute_and_set_new_monitoring_interval(q, f);
 				cn_initialize_interval(f);
 				f->longest_interval = f->current_interval;
 				return qdisc_drop(skb, sch, to_free);
@@ -941,7 +947,7 @@ static int cn_resize(struct Qdisc *sch, u32 log)
 	return 0;
 }
 
-static const struct nla_policy cn_policy[TCA_FQ_MAX + 1] = {
+static const struct nla_policy cn_policy[TCA_CN_MAX + 1] = {
 	[TCA_FQ_PLIMIT]			= { .type = NLA_U32 },
 	[TCA_FQ_FLOW_PLIMIT]		= { .type = NLA_U32 },
 	[TCA_FQ_QUANTUM]		= { .type = NLA_U32 },
@@ -952,13 +958,15 @@ static const struct nla_policy cn_policy[TCA_FQ_MAX + 1] = {
 	[TCA_FQ_BUCKETS_LOG]		= { .type = NLA_U32 },
 	[TCA_FQ_FLOW_REFILL_DELAY]	= { .type = NLA_U32 },
 	[TCA_FQ_LOW_RATE_THRESHOLD]	= { .type = NLA_U32 },
+	// Of course floating point types are not supported 😒
+	[TCA_CN_GUARD_INTERVAL]	= { .type = NLA_UNSPEC },
 };
 
 static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 				 struct netlink_ext_ack *extack)
 {
 	struct cn_sched_data *q = qdisc_priv(sch);
-	struct nlattr *tb[TCA_FQ_MAX + 1];
+	struct nlattr *tb[TCA_CN_MAX + 1];
 	int err, drop_count = 0;
 	unsigned drop_len = 0;
 	u32 cn_log;
@@ -966,7 +974,7 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 	if (!opt)
 		return -EINVAL;
 
-	err = nla_parse_nested(tb, TCA_FQ_MAX, opt, cn_policy, NULL);
+	err = nla_parse_nested(tb, TCA_CN_MAX, opt, cn_policy, NULL);
 	if (err < 0)
 		return err;
 
@@ -989,7 +997,9 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 	if (tb[TCA_FQ_FLOW_PLIMIT]) {
 		q->flow_plimit = nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]);
 	}
-
+	if (tb[TCA_CN_GUARD_INTERVAL]) {
+		q->guard_interval = *((double*) tb[TCA_CN_GUARD_INTERVAL]);
+	}
 	if (tb[TCA_FQ_QUANTUM]) {
 		u32 quantum = nla_get_u32(tb[TCA_FQ_QUANTUM]);
 
@@ -1085,6 +1095,7 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	q->cn_trees_log		= ilog2(1024);
 	q->orphan_mask		= 1024 - 1;
 	q->low_rate_threshold	= 550000 / 8;
+	q->guard_interval = 0.5;
 	qdisc_watchdog_init(&q->watchdog, sch);
 
 	if (opt) {

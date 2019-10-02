@@ -37,7 +37,7 @@ delay_to_add = 10
 rate = 100
 # Bytes, obviously
 MTU = 1514
-TIME = 60
+TIME = 120
 QDISC_NAME = "cn"
 CC="reno"
 #             Mbit/s       ms                bytes
@@ -45,6 +45,7 @@ BDP_packets = rate*1000000*delay_to_add/1000/(MTU*8)
 print("BDP_packets", BDP_packets)
 # Just for fun...
 BDP_packets *= 0.2
+# BDP_packets = 501
 # BDP_packets = 1
 print("actual packets", BDP_packets)
 # quit()
@@ -76,7 +77,7 @@ def run_commands(cmds, Popen=False):
 env_with_tc = os.environ.copy()
 # Idiotic
 # env_with_tc["TC_LIB_DIR"] = os.path.expanduser('~/repos/iproute2/tc')
-env_with_tc["TC_LIB_DIR"] = "/home/max/repos/iproute2/tc"
+env_with_tc["TC_LIB_DIR"] = "/home/max/repos/traq/iproute2/tc"
 
 # print("os.environ", os.environ)
 
@@ -147,7 +148,7 @@ def run(vnet):
 		# 	tcpdump_switch_popens.append(subprocess.Popen(f"/usr/sbin/tcpdump -s 96 -i {interface_name} -w switch_{interface_name}.pcap tcp port {cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
 		# client_popen = hosts[0].Popen(f"iperf3 -w 10M -V -4 -t {TIME} -C {CC} --cport {cport} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		client_popen = hosts[0].Popen(f"iperf3 -w 50M -V -4 -t {TIME} -C {CC} --cport {cport} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		client_popen = hosts[0].Popen(f"iperf3 -V -4 -t {TIME} -C {CC} --cport {cport} -c host1".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		print("client pid", client_popen.pid)
 		# time.sleep(0.1)
 
