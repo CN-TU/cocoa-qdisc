@@ -34,12 +34,12 @@ cport = 60000
 # milliseconds
 delay_to_add = 10
 # Mbit/s
-rate = 50
+rate = 100
 # Bytes, obviously
 MTU = 1514
 TIME = 240
 QDISC_NAME = "cn"
-CC="cubic"
+CC="reno"
 #             Mbit/s       ms                bytes
 BDP_packets = rate*1000000*delay_to_add/1000/(MTU*8)
 print("BDP_packets", BDP_packets)
@@ -126,12 +126,22 @@ def run(vnet):
 			execute_popen_and_show_result(f"ethtool -K {interface} gso off")
 			execute_popen_and_show_result(f"ethtool -K {interface} tso off")
 
-			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {QDISC_NAME if interface=='host10' else 'fq'} nopacing quantum 3028 initial_quantum 3028{f' flow_limit {int(math.ceil(BDP_packets))} guard_interval 2.0' if interface=='host10' else ''}", {"env": env_with_tc})])
+			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {QDISC_NAME if interface=='host10' else 'fq'} nopacing quantum 3028 initial_quantum 3028{f' flow_limit {int(math.ceil(BDP_packets))} guard_interval 2.0 max_increase 2.0' if interface=='host10' else ''}", {"env": env_with_tc})])
 			# run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb rate {}mbit ceil {}mbit".format(interface, rate, rate), ("tc qdisc add dev {} parent 2:21 handle 3: {}".format(interface, QDISC_NAME), {"env": env_with_tc})])
 		#     # output = subprocess.run(f"tc qdisc replace dev {interface} root {QDISC_NAME}".split(" "), capture_output=True, env=env_with_tc)
 		#     print("output", output)
 		# quit()
 		vnet.update_hosts()
+
+		if CC=="bbr":
+			for i in range(len(hosts)):
+				with hosts[i].Popen("tc qdisc replace dev eth0 root fq".split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as qdisc_info:
+					qdisc_info_output = qdisc_info.stdout.read().decode("utf-8").split("\n")
+					print("qdisc_info_output host {i}", qdisc_info_output)
+		for i in range(len(hosts)):
+			with hosts[i].Popen("tc qdisc show dev eth0".split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as qdisc_info:
+				qdisc_info_output = qdisc_info.stdout.read().decode("utf-8").split("\n")
+				print("qdisc_info_output host {i}", qdisc_info_output)
 
 		with hosts[0].Popen("ping -c 100 -i 0 host1".split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as ping:
 			ping_output = ping.stdout.read().decode("utf-8").split("\n")
@@ -153,7 +163,7 @@ def run(vnet):
 		# time.sleep(0.1)
 
 		time.sleep(TIME/2)
-		run_commands([f"tc class change dev {interface} parent 2: classid 2:21 htb rate {rate*5}mbit"])
+		run_commands([f"tc class change dev {interface} parent 2: classid 2:21 htb rate {int(rate/2)}mbit"])
 
 		# trace_popen = hosts[0].Popen(f"trace-cmd record -e tcp:tcp_probe -P {client_popen.pid}".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		# trace_popen = hosts[0].Popen(f"trace-cmd record -e tcp:tcp_probe".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
