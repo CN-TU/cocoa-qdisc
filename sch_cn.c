@@ -267,14 +267,6 @@ static void cn_flow_set_throttled(struct cn_sched_data *q, struct cn_flow *f)
 	if (q->time_next_delayed_flow > f->time_next_packet)
 		q->time_next_delayed_flow = f->time_next_packet;
 }
-
-// Created by Max
-static void cn_copy_longest_interval_if_needed(struct cn_flow *f) {
-	if ((f->current_interval.end_ns - f->current_interval.start_ns) >= (f->longest_interval.end_ns - f->longest_interval.start_ns)) {
-		f->longest_interval = f->current_interval;
-	}
-}
-
 static struct kmem_cache *cn_flow_cachep __read_mostly;
 
 #define FLOW_TIMEOUT 60
@@ -333,15 +325,27 @@ static void cn_gc(struct cn_sched_data *q,
 	}
 }
 
-static void cn_initialize_interval(struct cn_flow *f) {
+static void cn_initialize_interval(struct interval_info *interval) {
+	// u64 current_ns = ktime_get_ns();
+	// f->current_interval.start_ns = current_ns;
+	// f->current_interval.end_ns = current_ns;
+	// f->current_interval.idle_ns = 0;
+	// f->current_interval.min_queue_length = ULONG_MAX;
+	// f->current_interval.packets_transmitted = 0;
+	// cn_copy_longest_interval_if_needed(f);
 	u64 current_ns = ktime_get_ns();
-	f->current_interval.start_ns = current_ns;
-	f->current_interval.end_ns = current_ns;
-	f->current_interval.idle_ns = 0;
-	f->current_interval.min_queue_length = ULONG_MAX;
-	f->current_interval.packets_transmitted = 0;
+	interval->start_ns = current_ns;
+	interval->end_ns = current_ns;
+	interval->idle_ns = 0;
+	interval->min_queue_length = ULONG_MAX;
+	interval->packets_transmitted = 0;
+}
 
-	cn_copy_longest_interval_if_needed(f);
+// Created by Max
+static void cn_copy_longest_interval_if_needed(struct cn_flow *f) {
+	if ((f->current_interval.end_ns - f->current_interval.start_ns) >= (f->longest_interval.end_ns - f->longest_interval.start_ns)) {
+		f->longest_interval = f->current_interval;
+	}
 }
 
 static void cn_initialize_monitoring_interval(struct cn_flow *f) {
@@ -350,6 +354,11 @@ static void cn_initialize_monitoring_interval(struct cn_flow *f) {
 	f->monitoring_period_end_ns = current_ns;
 	f->became_idle_ns = 0;
 	f->idle = false;
+	if (f->enlarge) {
+		trace_printk("sch_cn: At %llu, f->enlarge is true!!! This shouldn't happen", seconds_from_ns(f->flow_start_ns));
+	}
+
+	f->enlarge = false;
 }
 
 static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
@@ -444,7 +453,7 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 	}
 
 	cn_initialize_monitoring_interval(f);
-	cn_initialize_interval(f);
+	cn_initialize_interval(&(f->current_interval));
 	f->longest_interval = f->current_interval;
 	f->enlarge = false;
 	f->flow_max_qlen = (u32) q->flow_plimit;
@@ -598,7 +607,6 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 		// FIXME: This stat should probably be moved?
 		q->stat_flows_plimit++;
 		// Added by Max
-		// Also, if the buffer was enlarged, just start a new monitoring interval.
 		if (f->current_interval.idle_ns > 0 && !f->enlarge && f->monitoring_period_start_ns!=f->monitoring_period_end_ns) {
 			u64 idle_interval;
 			u64 active_interval;
@@ -621,11 +629,14 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 					trace_printk("sch_cn: 	At %llu, Simply starting a new monitoring interval!\n", seconds_from_ns(f->flow_start_ns));
 				}
 				f->current_interval.end_ns = ktime_get_ns();
-				f->longest_interval = f->current_interval;
-				// cn_copy_longest_interval_if_needed(f);
+				// f->longest_interval = f->current_interval;
+				cn_copy_longest_interval_if_needed(f);
+				if (f->enlarge) {
+					f->longest_interval = f->current_interval;
+				}
 				cn_initialize_monitoring_interval(f);
 				cn_compute_and_set_new_monitoring_interval(q, f);
-				cn_initialize_interval(f);
+				cn_initialize_interval(&(f->current_interval));
 				f->longest_interval = f->current_interval;
 				f->enlarge = false;
 				return qdisc_drop(skb, sch, to_free);
@@ -640,7 +651,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 				}
 				cn_initialize_monitoring_interval(f);
 				cn_compute_and_set_new_monitoring_interval(q, f);
-				cn_initialize_interval(f);
+				cn_initialize_interval(&(f->current_interval));
 				f->longest_interval = f->current_interval;
 				return qdisc_drop(skb, sch, to_free);
 			} else {
@@ -649,7 +660,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 				}
 				f->current_interval.end_ns = ktime_get_ns();
 				cn_copy_longest_interval_if_needed(f);
-				cn_initialize_interval(f);
+				cn_initialize_interval(&(f->current_interval));
 				return qdisc_drop(skb, sch, to_free);
 			}
 		}
