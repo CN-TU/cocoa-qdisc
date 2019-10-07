@@ -37,7 +37,7 @@ delay_to_add = 10
 rate = 100
 # Bytes, obviously
 MTU = 1514
-TIME = 120
+TIME = 60
 QDISC_NAME = "cn"
 CC="reno"
 #             Mbit/s       ms                bytes
@@ -126,7 +126,7 @@ def run(vnet):
 			execute_popen_and_show_result(f"ethtool -K {interface} gso off")
 			execute_popen_and_show_result(f"ethtool -K {interface} tso off")
 
-			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {QDISC_NAME if interface=='host10' else 'fq'} nopacing quantum 3028 initial_quantum 3028{f' flow_limit {int(math.ceil(BDP_packets))}' if interface=='host10' else ''}", {"env": env_with_tc})])
+			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {QDISC_NAME if interface=='host10' else 'fq'} nopacing quantum 3028 initial_quantum 3028{f' flow_limit {int(math.ceil(BDP_packets))} guard_interval 0.5' if interface=='host10' else ''}", {"env": env_with_tc})])
 			# run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb rate {}mbit ceil {}mbit".format(interface, rate, rate), ("tc qdisc add dev {} parent 2:21 handle 3: {}".format(interface, QDISC_NAME), {"env": env_with_tc})])
 		#     # output = subprocess.run(f"tc qdisc replace dev {interface} root {QDISC_NAME}".split(" "), capture_output=True, env=env_with_tc)
 		#     print("output", output)

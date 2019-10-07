@@ -948,18 +948,19 @@ static int cn_resize(struct Qdisc *sch, u32 log)
 }
 
 static const struct nla_policy cn_policy[TCA_CN_MAX + 1] = {
-	[TCA_FQ_PLIMIT]			= { .type = NLA_U32 },
-	[TCA_FQ_FLOW_PLIMIT]		= { .type = NLA_U32 },
-	[TCA_FQ_QUANTUM]		= { .type = NLA_U32 },
-	[TCA_FQ_INITIAL_QUANTUM]	= { .type = NLA_U32 },
-	[TCA_FQ_RATE_ENABLE]		= { .type = NLA_U32 },
-	[TCA_FQ_FLOW_DEFAULT_RATE]	= { .type = NLA_U32 },
-	[TCA_FQ_FLOW_MAX_RATE]		= { .type = NLA_U32 },
-	[TCA_FQ_BUCKETS_LOG]		= { .type = NLA_U32 },
-	[TCA_FQ_FLOW_REFILL_DELAY]	= { .type = NLA_U32 },
-	[TCA_FQ_LOW_RATE_THRESHOLD]	= { .type = NLA_U32 },
+	[TCA_CN_PLIMIT]			= { .type = NLA_U32 },
+	[TCA_CN_FLOW_PLIMIT]		= { .type = NLA_U32 },
+	[TCA_CN_QUANTUM]		= { .type = NLA_U32 },
+	[TCA_CN_INITIAL_QUANTUM]	= { .type = NLA_U32 },
+	[TCA_CN_RATE_ENABLE]		= { .type = NLA_U32 },
+	[TCA_CN_FLOW_DEFAULT_RATE]	= { .type = NLA_U32 },
+	[TCA_CN_FLOW_MAX_RATE]		= { .type = NLA_U32 },
+	[TCA_CN_BUCKETS_LOG]		= { .type = NLA_U32 },
+	[TCA_CN_FLOW_REFILL_DELAY]	= { .type = NLA_U32 },
+	[TCA_CN_LOW_RATE_THRESHOLD]	= { .type = NLA_U32 },
 	// Of course floating point types are not supported 😒
-	[TCA_CN_GUARD_INTERVAL]	= { .type = NLA_UNSPEC },
+	// [TCA_CN_GUARD_INTERVAL]	= { .type = NLA_UNSPEC },
+	[TCA_CN_GUARD_INTERVAL]	= { .type = NLA_U64 },
 };
 
 static int cn_change(struct Qdisc *sch, struct nlattr *opt,
@@ -971,37 +972,52 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 	unsigned drop_len = 0;
 	u32 cn_log;
 
-	if (!opt)
+	// trace_printk("sch_cn: In cn_change\n");
+	if (!opt) {
 		return -EINVAL;
+		trace_printk("sch_cn: !opt :/\n");
+	}
 
 	err = nla_parse_nested(tb, TCA_CN_MAX, opt, cn_policy, NULL);
-	if (err < 0)
+	if (err < 0) {
+		trace_printk("sch_cn: Parsing failed, message: %d\n", err);
 		return err;
+	}
 
 	sch_tree_lock(sch);
 
 	cn_log = q->cn_trees_log;
 
-	if (tb[TCA_FQ_BUCKETS_LOG]) {
-		u32 nval = nla_get_u32(tb[TCA_FQ_BUCKETS_LOG]);
+	if (tb[TCA_CN_BUCKETS_LOG]) {
+		u32 nval = nla_get_u32(tb[TCA_CN_BUCKETS_LOG]);
 
 		if (nval >= 1 && nval <= ilog2(256*1024))
 			cn_log = nval;
 		else
 			err = -EINVAL;
 	}
-	if (tb[TCA_FQ_PLIMIT])
+	if (tb[TCA_CN_PLIMIT])
 
-		sch->limit = nla_get_u32(tb[TCA_FQ_PLIMIT]);
+		sch->limit = nla_get_u32(tb[TCA_CN_PLIMIT]);
 
-	if (tb[TCA_FQ_FLOW_PLIMIT]) {
-		q->flow_plimit = nla_get_u32(tb[TCA_FQ_FLOW_PLIMIT]);
+	if (tb[TCA_CN_FLOW_PLIMIT]) {
+		q->flow_plimit = nla_get_u32(tb[TCA_CN_FLOW_PLIMIT]);
+		trace_printk("sch_cn: Set flow_limit to %u\n", (unsigned int) q->flow_plimit);
 	}
 	if (tb[TCA_CN_GUARD_INTERVAL]) {
-		q->guard_interval = *((double*) tb[TCA_CN_GUARD_INTERVAL]);
+		u64 unsigned_integer;
+		kernel_fpu_begin();
+		unsigned_integer = nla_get_u64(tb[TCA_CN_GUARD_INTERVAL]);
+		q->guard_interval = *((double*) &unsigned_integer);
+		// u64 original = *((u64*) tb[TCA_CN_GUARD_INTERVAL]);
+		// u64 what_is_printed = (u64) (q->guard_interval);
+		// u64 inverse = (u64) 1/(q->guard_interval);
+		// bool is_positive = q->guard_interval > 0;
+		trace_printk("sch_cn: Set guard interval to something but can only print truncated int %llu\n", (u64) q->guard_interval);
+		kernel_fpu_end();
 	}
-	if (tb[TCA_FQ_QUANTUM]) {
-		u32 quantum = nla_get_u32(tb[TCA_FQ_QUANTUM]);
+	if (tb[TCA_CN_QUANTUM]) {
+		u32 quantum = nla_get_u32(tb[TCA_CN_QUANTUM]);
 
 		if (quantum > 0)
 			q->quantum = quantum;
@@ -1009,22 +1025,22 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 			err = -EINVAL;
 	}
 
-	if (tb[TCA_FQ_INITIAL_QUANTUM])
-		q->initial_quantum = nla_get_u32(tb[TCA_FQ_INITIAL_QUANTUM]);
+	if (tb[TCA_CN_INITIAL_QUANTUM])
+		q->initial_quantum = nla_get_u32(tb[TCA_CN_INITIAL_QUANTUM]);
 
-	if (tb[TCA_FQ_FLOW_DEFAULT_RATE])
+	if (tb[TCA_CN_FLOW_DEFAULT_RATE])
 		pr_warn_ratelimited("sch_cn: defrate %u ignored.\n",
-						nla_get_u32(tb[TCA_FQ_FLOW_DEFAULT_RATE]));
+						nla_get_u32(tb[TCA_CN_FLOW_DEFAULT_RATE]));
 
-	if (tb[TCA_FQ_FLOW_MAX_RATE])
-		q->flow_max_rate = nla_get_u32(tb[TCA_FQ_FLOW_MAX_RATE]);
+	if (tb[TCA_CN_FLOW_MAX_RATE])
+		q->flow_max_rate = nla_get_u32(tb[TCA_CN_FLOW_MAX_RATE]);
 
-	if (tb[TCA_FQ_LOW_RATE_THRESHOLD])
+	if (tb[TCA_CN_LOW_RATE_THRESHOLD])
 		q->low_rate_threshold =
-			nla_get_u32(tb[TCA_FQ_LOW_RATE_THRESHOLD]);
+			nla_get_u32(tb[TCA_CN_LOW_RATE_THRESHOLD]);
 
-	if (tb[TCA_FQ_RATE_ENABLE]) {
-		u32 enable = nla_get_u32(tb[TCA_FQ_RATE_ENABLE]);
+	if (tb[TCA_CN_RATE_ENABLE]) {
+		u32 enable = nla_get_u32(tb[TCA_CN_RATE_ENABLE]);
 
 		if (enable <= 1)
 			q->rate_enable = enable;
@@ -1032,14 +1048,14 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 			err = -EINVAL;
 	}
 
-	if (tb[TCA_FQ_FLOW_REFILL_DELAY]) {
-		u32 usecs_delay = nla_get_u32(tb[TCA_FQ_FLOW_REFILL_DELAY]) ;
+	if (tb[TCA_CN_FLOW_REFILL_DELAY]) {
+		u32 usecs_delay = nla_get_u32(tb[TCA_CN_FLOW_REFILL_DELAY]) ;
 
 		q->flow_refill_delay = usecs_to_jiffies(usecs_delay);
 	}
 
-	if (tb[TCA_FQ_ORPHAN_MASK])
-		q->orphan_mask = nla_get_u32(tb[TCA_FQ_ORPHAN_MASK]);
+	if (tb[TCA_CN_ORPHAN_MASK])
+		q->orphan_mask = nla_get_u32(tb[TCA_CN_ORPHAN_MASK]);
 
 	if (!err) {
 		sch_tree_unlock(sch);
@@ -1056,6 +1072,8 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 		drop_count++;
 	}
 	qdisc_tree_reduce_backlog(sch, drop_count, drop_len);
+
+	// trace_printk("sch_cn: In cn_change at the end\n");
 
 	sch_tree_unlock(sch);
 	return err;
@@ -1077,6 +1095,8 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	struct cn_sched_data *q = qdisc_priv(sch);
 	int err;
 
+	// trace_printk("TCA_CN_MAX in sch_cn is %u\n", TCA_CN_MAX);
+
 	sch->limit		= 10000;
 	q->flow_plimit		= 100;
 
@@ -1095,7 +1115,13 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	q->cn_trees_log		= ilog2(1024);
 	q->orphan_mask		= 1024 - 1;
 	q->low_rate_threshold	= 550000 / 8;
+	kernel_fpu_begin();
 	q->guard_interval = 0.5;
+	// u64 what_is_printed = (u64) (q->guard_interval);
+	// u64 inverse = (u64) 1/(q->guard_interval);
+	// bool is_positive = q->guard_interval > 0;
+	// trace_printk("sch_cn: Set guard interval to something (at the beginning) but can only print %llu, its inverse %llu and it is > 0: %u\n", what_is_printed, inverse, (unsigned int) is_positive);
+	kernel_fpu_end();
 	qdisc_watchdog_init(&q->watchdog, sch);
 
 	if (opt) {
@@ -1115,20 +1141,20 @@ static int cn_dump(struct Qdisc *sch, struct sk_buff *skb)
 	if (opts == NULL)
 		goto nla_put_failure;
 
-	/* TCA_FQ_FLOW_DEFAULT_RATE is not used anymore */
+	/* TCA_CN_FLOW_DEFAULT_RATE is not used anymore */
 
-	if (nla_put_u32(skb, TCA_FQ_PLIMIT, sch->limit) ||
-			nla_put_u32(skb, TCA_FQ_FLOW_PLIMIT, q->flow_plimit) ||
-			nla_put_u32(skb, TCA_FQ_QUANTUM, q->quantum) ||
-			nla_put_u32(skb, TCA_FQ_INITIAL_QUANTUM, q->initial_quantum) ||
-			nla_put_u32(skb, TCA_FQ_RATE_ENABLE, q->rate_enable) ||
-			nla_put_u32(skb, TCA_FQ_FLOW_MAX_RATE, q->flow_max_rate) ||
-			nla_put_u32(skb, TCA_FQ_FLOW_REFILL_DELAY,
+	if (nla_put_u32(skb, TCA_CN_PLIMIT, sch->limit) ||
+			nla_put_u32(skb, TCA_CN_FLOW_PLIMIT, q->flow_plimit) ||
+			nla_put_u32(skb, TCA_CN_QUANTUM, q->quantum) ||
+			nla_put_u32(skb, TCA_CN_INITIAL_QUANTUM, q->initial_quantum) ||
+			nla_put_u32(skb, TCA_CN_RATE_ENABLE, q->rate_enable) ||
+			nla_put_u32(skb, TCA_CN_FLOW_MAX_RATE, q->flow_max_rate) ||
+			nla_put_u32(skb, TCA_CN_FLOW_REFILL_DELAY,
 			jiffies_to_usecs(q->flow_refill_delay)) ||
-			nla_put_u32(skb, TCA_FQ_ORPHAN_MASK, q->orphan_mask) ||
-			nla_put_u32(skb, TCA_FQ_LOW_RATE_THRESHOLD,
+			nla_put_u32(skb, TCA_CN_ORPHAN_MASK, q->orphan_mask) ||
+			nla_put_u32(skb, TCA_CN_LOW_RATE_THRESHOLD,
 			q->low_rate_threshold) ||
-			nla_put_u32(skb, TCA_FQ_BUCKETS_LOG, q->cn_trees_log))
+			nla_put_u32(skb, TCA_CN_BUCKETS_LOG, q->cn_trees_log))
 		goto nla_put_failure;
 
 	return nla_nest_end(skb, opts);
