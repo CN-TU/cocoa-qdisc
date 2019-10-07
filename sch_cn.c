@@ -160,6 +160,7 @@ struct cn_sched_data {
 
 	// Added by Max;
 	double guard_interval;
+	double max_increase;
 };
 
 struct ipv4_address {
@@ -609,7 +610,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 			f->enlarge = true;
 			kernel_fpu_begin();
 			// TODO: This is not optimal as it doesn't consider other flows...
-			f->flow_max_qlen += (int) (((double) f->current_interval.packets_transmitted)/active_interval*idle_interval);
+			f->flow_max_qlen = min(f->flow_max_qlen + ((int) (((double) f->current_interval.packets_transmitted)/active_interval*idle_interval)), (int) (((f->flow_max_qlen)*(q->max_increase))));
 			kernel_fpu_end();
 			if (ft.transport_protocol == 6) {
 				trace_printk("sch_cn: 	At %llu, New queue length is %d!\n!", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
@@ -1016,6 +1017,19 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 		trace_printk("sch_cn: Set guard interval to something but can only print truncated int %llu\n", (u64) q->guard_interval);
 		kernel_fpu_end();
 	}
+	if (tb[TCA_CN_MAX_INCREASE]) {
+		u64 unsigned_integer;
+		kernel_fpu_begin();
+		unsigned_integer = nla_get_u64(tb[TCA_CN_MAX_INCREASE]);
+		q->max_increase = *((double*) &unsigned_integer);
+		// u64 original = *((u64*) tb[TCA_CN_GUARD_INTERVAL]);
+		// u64 what_is_printed = (u64) (q->guard_interval);
+		// u64 inverse = (u64) 1/(q->guard_interval);
+		// bool is_positive = q->guard_interval > 0;
+		trace_printk("sch_cn: Set max increase to something but can only print truncated int %llu\n", (u64) q->max_increase);
+		kernel_fpu_end();
+	}
+
 	if (tb[TCA_CN_QUANTUM]) {
 		u32 quantum = nla_get_u32(tb[TCA_CN_QUANTUM]);
 
@@ -1116,7 +1130,8 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	q->orphan_mask		= 1024 - 1;
 	q->low_rate_threshold	= 550000 / 8;
 	kernel_fpu_begin();
-	q->guard_interval = 0.5;
+	q->guard_interval = 2.0;
+	q->max_increase = 2.0;
 	// u64 what_is_printed = (u64) (q->guard_interval);
 	// u64 inverse = (u64) 1/(q->guard_interval);
 	// bool is_positive = q->guard_interval > 0;
