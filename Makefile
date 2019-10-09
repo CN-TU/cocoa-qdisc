@@ -2,7 +2,7 @@ KERNEL_VERSION := $(shell uname -r)
 IDIR := /lib/modules/$(KERNEL_VERSION)/kernel/net/sched/
 KDIR := /lib/modules/$(KERNEL_VERSION)/build
 PWD := $(shell pwd)
-$(info KBUILD_CFLAGS is $(KBUILD_CFLAGS))
+# $(info KBUILD_CFLAGS is $(KBUILD_CFLAGS))
 ccflags-y := -msse2
 
 default:

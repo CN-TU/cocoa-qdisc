@@ -60,13 +60,15 @@
 // Added by max
 #include "iproute2/tc/cn_opts.h"
 
+#define NANOSECONDS_IN_ONE_SECOND 1000000000
+
 // How many times the previously longest interval to wait?
 // double guard_interval = 0.5;
 // double maximum_change = 2.0;
 
 static u64 seconds_from_ns(u64 ns) {
 	u64 current_ns = ktime_get_ns();
-	return (current_ns-ns)/1000000000;
+	return (current_ns-ns)/NANOSECONDS_IN_ONE_SECOND;
 }
 
 // FIXME: se only u64 because why not. Maybe fix this in the long term...
@@ -161,6 +163,7 @@ struct cn_sched_data {
 	// Added by Max;
 	double guard_interval;
 	double max_increase;
+	u64 max_monitoring_interval;
 };
 
 struct ipv4_address {
@@ -269,7 +272,8 @@ static void cn_flow_set_throttled(struct cn_sched_data *q, struct cn_flow *f)
 }
 static struct kmem_cache *cn_flow_cachep __read_mostly;
 
-#define FLOW_TIMEOUT 60
+// Flows time out after 10 seconds
+#define FLOW_TIMEOUT 10
 
 /* limit number of collected flows per round */
 #define CN_GC_MAX 8
@@ -355,9 +359,10 @@ static void cn_initialize_monitoring_interval(struct cn_flow *f) {
 	f->became_idle_ns = 0;
 	f->idle = false;
 	if (f->enlarge) {
-		trace_printk("sch_cn: At %llu, f->enlarge is true!!! This shouldn't happen", seconds_from_ns(f->flow_start_ns));
+		trace_printk("sch_cn: At %llu, f->enlarge is true!!! This shouldn't happen\n", seconds_from_ns(f->flow_start_ns));
 	}
 
+	// In theory this is useless...
 	f->enlarge = false;
 }
 
@@ -452,10 +457,10 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 		trace_printk("sch_cn: At %llu, got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", seconds_from_ns(f->flow_start_ns), src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
 	}
 
+	f->enlarge = false;
 	cn_initialize_monitoring_interval(f);
 	cn_initialize_interval(&(f->current_interval));
 	f->longest_interval = f->current_interval;
-	f->enlarge = false;
 	f->flow_max_qlen = (u32) q->flow_plimit;
 	return f;
 }
@@ -582,7 +587,7 @@ static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struc
 
 static void cn_compute_and_set_new_monitoring_interval(struct cn_sched_data *q, struct cn_flow *f) {
 	kernel_fpu_begin();
-	f->monitoring_period_end_ns = (u64) (ktime_get_ns() + (u64) (((double) (f->longest_interval.end_ns - f->longest_interval.start_ns)) * (q->guard_interval)));
+	f->monitoring_period_end_ns = ktime_get_ns() + min(q->max_monitoring_interval, (u64) (((double) (f->longest_interval.end_ns - f->longest_interval.start_ns)) * (q->guard_interval)));
 	kernel_fpu_end();
 }
 
@@ -634,11 +639,11 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 				if (f->enlarge) {
 					f->longest_interval = f->current_interval;
 				}
+				f->enlarge = false;
 				cn_initialize_monitoring_interval(f);
 				cn_compute_and_set_new_monitoring_interval(q, f);
 				cn_initialize_interval(&(f->current_interval));
 				f->longest_interval = f->current_interval;
-				f->enlarge = false;
 				return qdisc_drop(skb, sch, to_free);
 			} else if (ktime_get_ns() > f->monitoring_period_end_ns) {
 				f->current_interval.end_ns = ktime_get_ns();
@@ -1041,6 +1046,19 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 		kernel_fpu_end();
 	}
 
+	if (tb[TCA_CN_MAX_MONITORING_INTERVAL]) {
+		u64 unsigned_integer;
+		kernel_fpu_begin();
+		unsigned_integer = nla_get_u64(tb[TCA_CN_MAX_MONITORING_INTERVAL]);
+		q->max_monitoring_interval = (u64) (NANOSECONDS_IN_ONE_SECOND*(*((double*) &unsigned_integer)));
+		// u64 original = *((u64*) tb[TCA_CN_GUARD_INTERVAL]);
+		// u64 what_is_printed = (u64) (q->guard_interval);
+		// u64 inverse = (u64) 1/(q->guard_interval);
+		// bool is_positive = q->guard_interval > 0;
+		trace_printk("sch_cn: Set max monitoring interval to something %llu\n", q->max_monitoring_interval);
+		kernel_fpu_end();
+	}
+
 	if (tb[TCA_CN_QUANTUM]) {
 		u32 quantum = nla_get_u32(tb[TCA_CN_QUANTUM]);
 
@@ -1143,6 +1161,8 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	kernel_fpu_begin();
 	q->guard_interval = 2.0;
 	q->max_increase = 2.0;
+	// 1 second
+	q->max_monitoring_interval = 1*NANOSECONDS_IN_ONE_SECOND;
 	// u64 what_is_printed = (u64) (q->guard_interval);
 	// u64 inverse = (u64) 1/(q->guard_interval);
 	// bool is_positive = q->guard_interval > 0;
