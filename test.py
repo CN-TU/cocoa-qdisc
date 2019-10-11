@@ -44,7 +44,8 @@ opt = parser.parse_args()
 print(opt)
 
 #             Mbit/s       ms                bytes
-BDP_packets = opt.rate*1000000*opt.delay_to_add/1000/(opt.mtu*8)
+# BDP_packets = opt.rate*1000000*opt.delay_to_add/1000/(opt.mtu*8)
+BDP_packets = 100
 print("BDP_packets", BDP_packets)
 # Just for fun...
 # BDP_packets *= 0.2
@@ -131,7 +132,7 @@ def run(vnet):
 			execute_popen_and_show_result(f"ethtool -K {interface} gso off")
 			execute_popen_and_show_result(f"ethtool -K {interface} tso off")
 
-			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {opt.delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {opt.rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {opt.qdisc if interface=='host10' else 'fq'}{' nopacing quantum 3028 initial_quantum 3028' if opt.qdisc=='cn' or opt.qdisc=='fq' or interface!='host10' else ''}{f' flow_limit {int(math.ceil(BDP_packets))} guard_interval 2.0 max_increase 2.0 max_monitoring_interval 1.0' if interface=='host10' and opt.qdisc=='cn' else ''}", {"env": env_with_tc})])
+			run_commands([f"tc qdisc add dev {interface} root handle 1: netem delay {opt.delay_to_add/2}ms", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {opt.rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {opt.qdisc if interface=='host10' else 'fq'}{' nopacing' if ((opt.qdisc=='cn' or opt.qdisc=='fq') and opt.cc != 'bbr') or interface!='host10' else ''}{f' quantum 3028 initial_quantum 3028' if opt.qdisc=='cn' or opt.qdisc=='fq' or interface!='host10' else ''}{f' flow_limit {int(math.ceil(BDP_packets))} guard_interval 0.5 max_increase 2.0 max_monitoring_interval 1.0' if interface=='host10' and opt.qdisc=='cn' else ''}", {"env": env_with_tc})])
 			# run_commands(["tc qdisc add dev {} root handle 1: netem delay {}ms".format(interface, opt.delay_to_add/2), "tc qdisc add dev {} parent 1: handle 2: htb default 21".format(interface), "tc class add dev {} parent 2: classid 2:21 htb opt.rate {}mbit ceil {}mbit".format(interface, opt.rate, opt.rate), ("tc qdisc add dev {} parent 2:21 handle 3: {}".format(interface, opt.qdisc), {"env": env_with_tc})])
 		#     # output = subprocess.run(f"tc qdisc replace dev {interface} root {opt.qdisc}".split(" "), capture_output=True, env=env_with_tc)
 		#     print("output", output)
@@ -155,8 +156,9 @@ def run(vnet):
 
 		server_popen = hosts[1].Popen("iperf3 -V -4 -s".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s {opt.bytes_to_capture} -i eth0 -w sender_{opt.qdisc}_{opt.cc}_{opt.delay_to_add}_{opt.rate}_{opt.time}_{opt.change}.pcap tcp port {opt.cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s {opt.bytes_to_capture} -i eth0 -w receiver_{opt.qdisc}_{opt.cc}_{opt.delay_to_add}_{opt.rate}_{opt.time}_{opt.change}.pcap tcp port {opt.cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		os.makedirs("pcaps", exist_ok=True)
+		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s {opt.bytes_to_capture} -i eth0 -w pcaps/sender_{opt.qdisc}_{opt.cc}_{opt.delay_to_add}_{opt.rate}_{opt.time}_{opt.change}.pcap tcp port {opt.cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s {opt.bytes_to_capture} -i eth0 -w pcaps/receiver_{opt.qdisc}_{opt.cc}_{opt.delay_to_add}_{opt.rate}_{opt.time}_{opt.change}.pcap tcp port {opt.cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		# tcpdump_switch_popens = []
 		# for interface_name in switch.interfaces.keys():

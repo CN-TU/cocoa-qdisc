@@ -62,10 +62,6 @@
 
 #define NANOSECONDS_IN_ONE_SECOND 1000000000
 
-// How many times the previously longest interval to wait?
-// double guard_interval = 0.5;
-// double maximum_change = 2.0;
-
 static u64 seconds_from_ns(u64 ns) {
 	u64 current_ns = ktime_get_ns();
 	return (current_ns-ns)/NANOSECONDS_IN_ONE_SECOND;
@@ -628,46 +624,44 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 			if (ft.transport_protocol == 6) {
 				trace_printk("sch_cn: 	At %llu, New queue length is %d!\n!", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
 			}
-		} else {
-			if (f->monitoring_period_start_ns==f->monitoring_period_end_ns || f->enlarge) {
-				if (ft.transport_protocol == 6) {
-					trace_printk("sch_cn: 	At %llu, Simply starting a new monitoring interval!\n", seconds_from_ns(f->flow_start_ns));
-				}
-				f->current_interval.end_ns = ktime_get_ns();
-				// f->longest_interval = f->current_interval;
-				cn_copy_longest_interval_if_needed(f);
-				if (f->enlarge) {
-					f->longest_interval = f->current_interval;
-				}
-				f->enlarge = false;
-				cn_initialize_monitoring_interval(f);
-				cn_compute_and_set_new_monitoring_interval(q, f);
-				cn_initialize_interval(&(f->current_interval));
-				f->longest_interval = f->current_interval;
-				return qdisc_drop(skb, sch, to_free);
-			} else if (ktime_get_ns() > f->monitoring_period_end_ns) {
-				f->current_interval.end_ns = ktime_get_ns();
-				cn_copy_longest_interval_if_needed(f);
-				if (f->longest_interval.min_queue_length > 0) {
-					cn_drop_packets_from_end(f, sch, to_free);
-				}
-				if (ft.transport_protocol == 6) {
-					trace_printk("sch_cn: 	At %llu, Monitoring period is over and no idle ns! New queue length is %d, max is %d!\n", seconds_from_ns(f->flow_start_ns),  f->qlen, f->flow_max_qlen);
-				}
-				cn_initialize_monitoring_interval(f);
-				cn_compute_and_set_new_monitoring_interval(q, f);
-				cn_initialize_interval(&(f->current_interval));
-				f->longest_interval = f->current_interval;
-				return qdisc_drop(skb, sch, to_free);
-			} else {
-				if (ft.transport_protocol == 6) {
-					trace_printk("sch_cn: 	At %llu, Packet lost during monitoring period... Business as usual!\n", seconds_from_ns(f->flow_start_ns));
-				}
-				f->current_interval.end_ns = ktime_get_ns();
-				cn_copy_longest_interval_if_needed(f);
-				cn_initialize_interval(&(f->current_interval));
-				return qdisc_drop(skb, sch, to_free);
+		} else if (f->monitoring_period_start_ns==f->monitoring_period_end_ns || f->enlarge) {
+			if (ft.transport_protocol == 6) {
+				trace_printk("sch_cn: 	At %llu, Simply starting a new monitoring interval!\n", seconds_from_ns(f->flow_start_ns));
 			}
+			f->current_interval.end_ns = ktime_get_ns();
+			// f->longest_interval = f->current_interval;
+			cn_copy_longest_interval_if_needed(f);
+			if (f->enlarge) {
+				f->longest_interval = f->current_interval;
+			}
+			f->enlarge = false;
+			cn_initialize_monitoring_interval(f);
+			cn_compute_and_set_new_monitoring_interval(q, f);
+			cn_initialize_interval(&(f->current_interval));
+			f->longest_interval = f->current_interval;
+			return qdisc_drop(skb, sch, to_free);
+		} else if (ktime_get_ns() > f->monitoring_period_end_ns) {
+			f->current_interval.end_ns = ktime_get_ns();
+			cn_copy_longest_interval_if_needed(f);
+			if (f->longest_interval.min_queue_length > 0) {
+				cn_drop_packets_from_end(f, sch, to_free);
+			}
+			if (ft.transport_protocol == 6) {
+				trace_printk("sch_cn: 	At %llu, Monitoring period is over and no idle ns! New queue length is %d, max is %d!\n", seconds_from_ns(f->flow_start_ns), f->qlen, f->flow_max_qlen);
+			}
+			cn_initialize_monitoring_interval(f);
+			cn_compute_and_set_new_monitoring_interval(q, f);
+			cn_initialize_interval(&(f->current_interval));
+			f->longest_interval = f->current_interval;
+			return qdisc_drop(skb, sch, to_free);
+		} else {
+			if (ft.transport_protocol == 6) {
+				trace_printk("sch_cn: 	At %llu, Packet lost during monitoring period... Business as usual!\n", seconds_from_ns(f->flow_start_ns));
+			}
+			f->current_interval.end_ns = ktime_get_ns();
+			cn_copy_longest_interval_if_needed(f);
+			cn_initialize_interval(&(f->current_interval));
+			return qdisc_drop(skb, sch, to_free);
 		}
 	}
 
@@ -1026,10 +1020,6 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 		kernel_fpu_begin();
 		unsigned_integer = nla_get_u64(tb[TCA_CN_GUARD_INTERVAL]);
 		q->guard_interval = *((double*) &unsigned_integer);
-		// u64 original = *((u64*) tb[TCA_CN_GUARD_INTERVAL]);
-		// u64 what_is_printed = (u64) (q->guard_interval);
-		// u64 inverse = (u64) 1/(q->guard_interval);
-		// bool is_positive = q->guard_interval > 0;
 		trace_printk("sch_cn: Set guard interval to something but can only print truncated int %llu\n", (u64) q->guard_interval);
 		kernel_fpu_end();
 	}
@@ -1038,10 +1028,6 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 		kernel_fpu_begin();
 		unsigned_integer = nla_get_u64(tb[TCA_CN_MAX_INCREASE]);
 		q->max_increase = *((double*) &unsigned_integer);
-		// u64 original = *((u64*) tb[TCA_CN_GUARD_INTERVAL]);
-		// u64 what_is_printed = (u64) (q->guard_interval);
-		// u64 inverse = (u64) 1/(q->guard_interval);
-		// bool is_positive = q->guard_interval > 0;
 		trace_printk("sch_cn: Set max increase to something but can only print truncated int %llu\n", (u64) q->max_increase);
 		kernel_fpu_end();
 	}
@@ -1159,7 +1145,7 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	q->orphan_mask		= 1024 - 1;
 	q->low_rate_threshold	= 550000 / 8;
 	kernel_fpu_begin();
-	q->guard_interval = 2.0;
+	q->guard_interval = 0.5;
 	q->max_increase = 2.0;
 	// 1 second
 	q->max_monitoring_interval = 1*NANOSECONDS_IN_ONE_SECOND;
