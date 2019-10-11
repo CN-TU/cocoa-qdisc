@@ -1,0 +1,180 @@
+\ifglsentryexists{aqm}{}%
+{%
+\gls@defglossaryentry{aqm}%
+{%
+name={AQM},%
+sort={AQM},%
+type={acronym},%
+first={Active Queue Management\glsspace (AQM)},%
+firstplural={Active Queue Managements\glsspace (AQMs)},%
+text={AQM},%
+plural={AQMs},%
+description={Active Queue Management},%
+descriptionplural={Active Queue Management\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Active Queue Management},%
+longplural={Active Queue Managements},%
+short={AQM},%
+shortplural={AQMs},%
+counter={page},%
+parent={},%
+%
+}%
+}%
+\ifglsentryexists{cc}{}%
+{%
+\gls@defglossaryentry{cc}%
+{%
+name={CC},%
+sort={CC},%
+type={acronym},%
+first={Congestion Control\glsspace (CC)},%
+firstplural={Congestion Controls\glsspace (CCs)},%
+text={CC},%
+plural={CCs},%
+description={Congestion Control},%
+descriptionplural={Congestion Control\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Congestion Control},%
+longplural={Congestion Controls},%
+short={CC},%
+shortplural={CCs},%
+counter={page},%
+parent={},%
+%
+}%
+}%
+\ifglsentryexists{cca}{}%
+{%
+\gls@defglossaryentry{cca}%
+{%
+name={CCA},%
+sort={CCA},%
+type={acronym},%
+first={Congestion Control Algorithm\glsspace (CCA)},%
+firstplural={Congestion Control Algorithms\glsspace (CCAs)},%
+text={CCA},%
+plural={CCAs},%
+description={Congestion Control Algorithm},%
+descriptionplural={Congestion Control Algorithm\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Congestion Control Algorithm},%
+longplural={Congestion Control Algorithms},%
+short={CCA},%
+shortplural={CCAs},%
+counter={page},%
+parent={},%
+%
+}%
+}%
+\ifglsentryexists{qdisc}{}%
+{%
+\gls@defglossaryentry{qdisc}%
+{%
+name={qdisc},%
+sort={qdisc},%
+type={acronym},%
+first={queuing discipline\glsspace (qdisc)},%
+firstplural={queuing disciplines\glsspace (qdiscs)},%
+text={qdisc},%
+plural={qdiscs},%
+description={queuing discipline},%
+descriptionplural={queuing discipline\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={queuing discipline},%
+longplural={queuing disciplines},%
+short={qdisc},%
+shortplural={qdiscs},%
+counter={page},%
+parent={},%
+%
+}%
+}%
+\ifglsentryexists{fq}{}%
+{%
+\gls@defglossaryentry{fq}%
+{%
+name={FQ},%
+sort={FQ},%
+type={acronym},%
+first={Fair Queuing\glsspace (FQ)},%
+firstplural={Fair Queuings\glsspace (FQs)},%
+text={FQ},%
+plural={FQs},%
+description={Fair Queuing},%
+descriptionplural={Fair Queuing\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Fair Queuing},%
+longplural={Fair Queuings},%
+short={FQ},%
+shortplural={FQs},%
+counter={page},%
+parent={},%
+%
+}%
+}%
+\ifglsentryexists{rtt}{}%
+{%
+\gls@defglossaryentry{rtt}%
+{%
+name={RTT},%
+sort={RTT},%
+type={acronym},%
+first={Round-Trip Time\glsspace (RTT)},%
+firstplural={Round-Trip Times\glsspace (RTTs)},%
+text={RTT},%
+plural={RTTs},%
+description={Round-Trip Time},%
+descriptionplural={Round-Trip Time\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Round-Trip Time},%
+longplural={Round-Trip Times},%
+short={RTT},%
+shortplural={RTTs},%
+counter={page},%
+parent={},%
+%
+}%
+}%

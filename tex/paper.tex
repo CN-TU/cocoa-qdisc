@@ -1,0 +1,209 @@
+%%
+%% This is file `sample-sigconf.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% samples.dtx  (with options: `sigconf')
+%%
+%% IMPORTANT NOTICE:
+%%
+%%% For the copyright see the source file.
+%%
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from sample-sigconf.tex.
+%%
+%% For distribution of the original source see the terms
+%% for copying and modification in the file samples.dtx.
+%%
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+%%
+%% The first command in your LaTeX source must be the \documentclass command.
+
+% Modify this to remove all ACM and conference information (for arXiv for example)
+\def\removeHeaders{no}
+
+
+
+\def\tempYes{yes}
+\documentclass[10pt,sigconf,letterpaper,dvipsnames\ifx\removeHeaders\tempYes ,nonacm\fi]{acmart}
+\acmYear{2019}
+\copyrightyear{2019}
+\acmConference{Workshop on Buffer Sizing}{December 2-3, 2019}{Stanford, California, USA}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage{multirow}
+\usepackage{blindtext}
+\usepackage{soul}
+\usepackage[inline]{enumitem}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+
+% Acronyms
+\usepackage[nomain, toc, acronym]{glossaries}
+\glsdisablehyper
+
+\ifx\removeHeaders\tempYes
+\settopmatter{printacmref=false} % Removes citation information below abstract
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
+\fi
+
+\newcommand\note[2]{{\color{#1}#2}}
+\newcommand\todo[1]{{\note{red}{TODO: #1}}}
+
+\makeatletter
+\newcommand{\StateIndent}[1][3]{%
+  \setlength\@tempdima{\algorithmicindent}%
+  \Statex\hskip\dimexpr#1\@tempdima\relax}
+\algdef{S}[WHILE]{WhileNoDo}[1]{\algorithmicwhile\ #1}%
+\makeatother
+
+\algnewcommand\True{\textbf{true}}
+\algnewcommand\False{\textbf{false}}
+\algnewcommand\Break{\textbf{break}}
+
+\newcommand{\algorithmautorefname}{Algorithm}
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+%%\citestyle{acmauthoryear}
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{Congestion Control Aware Queuing}
+
+%% GLOSSARY
+
+\newacronym{aqm}{AQM}{Active Queue Management}
+\newacronym{cc}{CC}{Congestion Control}
+\newacronym{cca}{CCA}{Congestion Control Algorithm}
+\newacronym{qdisc}{qdisc}{queuing discipline}
+\newacronym{fq}{FQ}{Fair Queuing}
+\newacronym{rtt}{RTT}{Round-Trip Time}
+
+\begin{abstract}
+Recent model-based congestion control algorithms such as BBR use repeated measurements at the end-point to build a model of the network connection and use it to achieve optimal throughput with low queuing delay. Conversely, applying this model-based approach to Active Queue Management (AQM) has so far been underinvestigated. We propose an AQM scheduler based on fair queuing, which adapts the buffer size depending on the needs of each flow without requiring active participation from the endpoint. We implement this scheduler for the Linux kernel and show that it interacts well with the most common congestion control algorithms and can significantly increase throughput compared to CoDeL while avoiding overbuffering.
+\end{abstract}
+
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+%% Of note is the shared affiliation of the first two authors, and the
+%% "authornote" and "authornotemark" commands
+%% used to denote shared contribution to the research.
+\author{Maximilian Bachl, Joachim Fabini, Tanja Zseby}
+\affiliation{\institution{Technische Universität Wien}}
+\email{firstname.lastname@tuwien.ac.at}
+
+
+%%
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose.
+%\renewcommand{\shortauthors}{Hartl and Bachl}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+%\begin{abstract}
+%  A clear and well-documented \LaTeX\ document is presented as an
+%  article formatted for publication by ACM in a conference proceedings
+%  or journal publication. Based on the ``acmart'' document class, this
+%  article presents and explains many of the common variations, as well
+%  as many of the formatting elements an author may use in the
+%  preparation of the documentation of their work.
+%\end{abstract}
+
+\newcommand{\codel}{CoDeL}
+
+\settopmatter{printfolios=true}
+\maketitle
+
+\section{Introduction}
+
+In the last decades various \gls{aqm} mechanisms have been proposed to minimize excessive standing queues in the Internet. One of the most influential recent efforts is \codel{} \cite{nichols_controlling_2012} whose goal is that the queuing delay at the bottleneck link is at least once under 5\;ms in a moving window of 100\;ms. 
+
+While it is important to keep the queuing delay constrained, it is also necessary to ensure that overly ``aggressive'' flows cannot benefit by ``stealing'' less aggressive flows' bandwidth. Thus researchers and engineers have developed \textit{\gls{fq}} mechanisms \cite{shreedhar_efficient_1996,dumazet_pkt_sched:_2013} to isolate different flows' queues (\textit{flow queuing}) so that for example a delay-sensitive live video call cannot be impaired by a concurrent bulk transfer which takes all the available bandwidth. 
+
+Recent approaches have tried to combine \gls{aqm} with \gls{fq}. \cite{taht_flow_2018} developed \textit{fq\_codel}, a \gls{qdisc} that uses \gls{fq} and lets \codel{} manage each queue. \cite{hoiland-jorgensen_piece_2018} expand upon this and create the \textit{cake} \gls{qdisc} that also adds features such as not only per-flow queuing but also per-host queuing for even increased fairness. Furthermore they also include bandwidth shaping into their solution and aim to create one \gls{qdisc} that is easy to configure and can be easily deployed on home routers and offers all features in one solution. 
+
+While we do not want to make statements about the general performance of \codel{}, we show that fq\_codel and cake do not optimally use available bandwidth in common network configurations for common \gls{cca}s. This becomes especially prevalent for links with a high bandwidth or a large \gls{rtt} but is already noticeable for common scenarios, such as a link with 100\;Mbit/s and an \gls{rtt} of 50\;ms. 
+
+We show that the impaired performance is a result of keeping the queuing delay under 5\;ms, which hinders \glspl{cca}s such as Reno or Cubic from reaching maximum throughput. The problem is that these \glspl{qdisc} aim to keep the delay under the threshold no matter the effect on throughput and do not take the congestion control of the flow into account. 
+
+As a remedy, we conceive an \gls{aqm} mechanism that explicitly measures the behavior of the \gls{cc} of a flow and dynamically changes the buffer so that 
+\begin{enumerate}[wide, labelwidth=!, labelindent=0pt]
+\item link utilization is optimized and
+\item queuing delay is kept at a minimum that is required to achieve optimum throughput considering the \gls{cc}
+\end{enumerate}
+
+Finally, we develop a prototype of our \gls{qdisc} and show that it can achieve these objectives for the most common loss-based \gls{cca}s, Reno \cite {jacobson_congestion_1988} and Cubic \cite{ha_cubic:_2008}. These \glspl{cca} work by continuously increasing the number of bytes that are allowed to be in the network if no packet loss is experienced and by sharply decreasing this number if a packet is lost. With Cubic being the default \gls{cc} in all major OS \todo{citation needed}, we especially emphasize our evaluation on improving its performance. Contrasting to the aforementioned \glspl{cca}, recently proposed BBR \cite{cardwell_bbr:_2016} does not continuously increase and then sharply decrease when packets are lost but instead uses periodic measurements to estimate the available bandwidth as well as the minimal \gls{rtt} and then tries to stay at this point of optimal bandwidth and minimal delay. BBR is thus considered to be \textit{model-based}. We demonstrate that our \gls{qdisc} also behaves well in interaction with \glspl{cca} BBR.
+
+\section{Concept}
+
+\begin{algorithm}
+\caption{Procedure which determines when to synchronize the neural network weights from the global weights in case of congestion control. We assume that the window at time step $t$ is stored in a list $l_\text{windows}$ and that the number of bytes sent in each time step is stored in $l_\text{sent}$. Alternatively to this procedure one can simply synchronize the weights after each $t_\text{max}$ actions where $t_\text{max}$ is an arbitrarily chosen integer greater than 0.}
+\label{alg:update}
+\begin{algorithmic}[1]%
+%\algrestore{palalg}
+\Function{updateWeights?}{}
+	\State $i \gets 0$
+	\While{$i < \#(l_\text{actions})$}
+		\State $w\gets \left\lfloor l_\text{windows}[i] + l_\text{actions}[i] \right\rfloor $
+		\For{$j\gets i..\#(l_\text{actions})-1$}
+			\State $w\gets \text{w} - l_\text{sent}[j]$
+			\If{$w\leq 0 \land i+1 \geq 10$} \Comment{at least 10}
+				\State $i \gets j$
+				\State \Break
+			\EndIf
+		\EndFor
+		\If{$i = \#(l_\text{windows})-1$}
+			\State \Return \True
+		\EndIf
+	\EndWhile
+	\State \Return \False
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\section*{Acknowledgements}
+We thank Gernot Vormayr for providing us with the \texttt{py-virtnet} toolkit for building virtual networks. 
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{bibliography}
+
+\end{document}

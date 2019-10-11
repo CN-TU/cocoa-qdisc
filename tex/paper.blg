@@ -1,0 +1,56 @@
+This is BibTeX, Version 0.99d (TeX Live 2019/dev/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: paper.aux
+The style file: ACM-Reference-Format.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Database file #1: bibliography.bib
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=20001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Warning--empty publisher in hoiland-jorgensen_piece_2018
+Warning--empty address in hoiland-jorgensen_piece_2018
+You've used 7 entries,
+            5719 wiz_defined-function locations,
+            1345 strings with 16031 characters,
+and the built_in function-call counts, 8453 in all, are:
+= -- 1107
+> -- 294
+< -- 0
++ -- 97
+- -- 104
+* -- 592
+:= -- 856
+add.period$ -- 36
+call.type$ -- 7
+change.case$ -- 48
+chr.to.int$ -- 7
+cite$ -- 9
+duplicate$ -- 711
+empty$ -- 498
+format.name$ -- 124
+if$ -- 2001
+int.to.chr$ -- 2
+int.to.str$ -- 1
+missing$ -- 22
+newline$ -- 122
+num.names$ -- 56
+pop$ -- 227
+preamble$ -- 1
+purify$ -- 111
+quote$ -- 0
+skip$ -- 264
+stack$ -- 0
+substring$ -- 663
+swap$ -- 79
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 168
+warning$ -- 2
+while$ -- 59
+width$ -- 0
+write$ -- 185
+(There were 2 warnings)
