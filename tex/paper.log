@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2019/dev/Debian) (preloaded format=pdflatex 2019.8.2)  11 OCT 2019 20:19
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2019/dev/Debian) (preloaded format=pdflatex 2019.8.2)  14 OCT 2019 17:09
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -1391,10 +1391,6 @@ Overfull \hbox (2.10287pt too wide) in paragraph at lines 160--161
  []
 
 
-Package natbib Warning: Citation `cardwell_bbr:_2016' on page 1 undefined on in
-put line 174.
-
-
 Underfull \vbox (badness 2197) has occurred while \output is active []
 
  [1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
@@ -1442,16 +1438,14 @@ us with the \T1/zi4/m/n/10 py-virtnet
  []
 
 (./paper.bbl
-LaTeX Info: Redefining \tempurl on input line 66.
-LaTeX Info: Redefining \tempurl on input line 81.
-LaTeX Info: Redefining \tempurl on input line 97.
+LaTeX Info: Redefining \tempurl on input line 67.
+LaTeX Info: Redefining \tempurl on input line 84.
+LaTeX Info: Redefining \tempurl on input line 99.
 LaTeX Info: Redefining \tempurl on input line 115.
-LaTeX Info: Redefining \tempurl on input line 130.
+LaTeX Info: Redefining \tempurl on input line 133.
 LaTeX Info: Redefining \tempurl on input line 148.
+LaTeX Info: Redefining \tempurl on input line 166.
 )
-
-Package natbib Warning: There were undefined citations.
-
 
 Package balance Warning: You have called \balance in second column
 (balance)                Columns might not be balanced.
@@ -1464,24 +1458,14 @@ Package atveryend Info: Empty hook `AfterLastShipout' on input line 209.
  (./paper.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 209.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 209.
-
-
-Package rerunfilecheck Warning: File `paper.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `paper.out':
-(rerunfilecheck)             Before: FAAD0C5A540F0A46D96B0145505BD58E;294
-(rerunfilecheck)             After:  628B48B010AF7FAF65C108A94D1662E1;385.
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
+Package rerunfilecheck Info: File `paper.out' has not changed.
+(rerunfilecheck)             Checksum: 628B48B010AF7FAF65C108A94D1662E1;385.
  ) 
 Here is how much of TeX's memory you used:
- 23100 strings out of 492615
- 350645 string characters out of 6131391
- 529293 words of memory out of 5000000
- 26120 multiletter control sequences out of 15000+600000
+ 23105 strings out of 492615
+ 350757 string characters out of 6131391
+ 529853 words of memory out of 5000000
+ 26124 multiletter control sequences out of 15000+600000
  161932 words of font info for 282 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  60i,11n,94p,1986b,503s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1503,10 +1487,10 @@ tineTI.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/txfonts/rtxmi.pfb>
 </usr/share/texlive/texmf-dist/fonts/type1/public/txfonts/rtxr.pfb></usr/share/
 texlive/texmf-dist/fonts/type1/public/newtx/txsys.pfb></usr/share/texlive/texmf
 -dist/fonts/type1/public/newtx/zxlri.pfb>
-Output written on paper.pdf (2 pages, 417388 bytes).
+Output written on paper.pdf (2 pages, 417819 bytes).
 PDF statistics:
- 141 PDF objects out of 1000 (max. 8388607)
- 109 compressed objects within 2 object streams
- 20 named destinations out of 1000 (max. 500000)
- 54821 words of extra memory for PDF output out of 61914 (max. 10000000)
+ 147 PDF objects out of 1000 (max. 8388607)
+ 115 compressed objects within 2 object streams
+ 21 named destinations out of 1000 (max. 500000)
+ 54829 words of extra memory for PDF output out of 61914 (max. 10000000)
 

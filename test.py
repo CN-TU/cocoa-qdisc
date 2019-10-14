@@ -11,6 +11,8 @@ import math
 import signal
 sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
+start_time = int(time.time() * 1000)
+
 import subprocess
 # import matplotlib
 # matplotlib.use("Agg")
@@ -157,8 +159,8 @@ def run(vnet):
 		server_popen = hosts[1].Popen("iperf3 -V -4 -s".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		os.makedirs("pcaps", exist_ok=True)
-		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s {opt.bytes_to_capture} -i eth0 -w pcaps/sender_{opt.qdisc}_{opt.cc}_{opt.delay_to_add}_{opt.rate}_{opt.time}_{opt.change}.pcap tcp port {opt.cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s {opt.bytes_to_capture} -i eth0 -w pcaps/receiver_{opt.qdisc}_{opt.cc}_{opt.delay_to_add}_{opt.rate}_{opt.time}_{opt.change}.pcap tcp port {opt.cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		tcpdump_sender_popen = hosts[0].Popen(f"/usr/sbin/tcpdump -s {opt.bytes_to_capture} -i eth0 -w pcaps/sender_{opt.qdisc}_{opt.cc}_{opt.delay_to_add}_{opt.rate}_{opt.time}_{opt.change}_{start_time}.pcap tcp port {opt.cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		tcpdump_receiver_popen = hosts[1].Popen(f"/usr/sbin/tcpdump -s {opt.bytes_to_capture} -i eth0 -w pcaps/receiver_{opt.qdisc}_{opt.cc}_{opt.delay_to_add}_{opt.rate}_{opt.time}_{opt.change}_{start_time}.pcap tcp port {opt.cport} && port 5201".split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		# tcpdump_switch_popens = []
 		# for interface_name in switch.interfaces.keys():

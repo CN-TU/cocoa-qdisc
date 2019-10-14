@@ -12,45 +12,45 @@ Reallocated glb_str_end (elt_size=4) to 20 items from 10.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Warning--empty publisher in hoiland-jorgensen_piece_2018
 Warning--empty address in hoiland-jorgensen_piece_2018
-You've used 7 entries,
+You've used 8 entries,
             5719 wiz_defined-function locations,
-            1345 strings with 16031 characters,
-and the built_in function-call counts, 8453 in all, are:
-= -- 1107
-> -- 294
+            1353 strings with 16282 characters,
+and the built_in function-call counts, 9891 in all, are:
+= -- 1319
+> -- 357
 < -- 0
-+ -- 97
-- -- 104
-* -- 592
-:= -- 856
-add.period$ -- 36
-call.type$ -- 7
-change.case$ -- 48
-chr.to.int$ -- 7
-cite$ -- 9
-duplicate$ -- 711
-empty$ -- 498
-format.name$ -- 124
-if$ -- 2001
++ -- 118
+- -- 124
+* -- 705
+:= -- 999
+add.period$ -- 41
+call.type$ -- 8
+change.case$ -- 57
+chr.to.int$ -- 8
+cite$ -- 10
+duplicate$ -- 818
+empty$ -- 574
+format.name$ -- 148
+if$ -- 2366
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 22
-newline$ -- 122
-num.names$ -- 56
-pop$ -- 227
+missing$ -- 26
+newline$ -- 134
+num.names$ -- 64
+pop$ -- 264
 preamble$ -- 1
-purify$ -- 111
+purify$ -- 129
 quote$ -- 0
-skip$ -- 264
+skip$ -- 299
 stack$ -- 0
-substring$ -- 663
-swap$ -- 79
+substring$ -- 769
+swap$ -- 92
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 168
+type$ -- 184
 warning$ -- 2
-while$ -- 59
+while$ -- 66
 width$ -- 0
-write$ -- 185
+write$ -- 206
 (There were 2 warnings)
