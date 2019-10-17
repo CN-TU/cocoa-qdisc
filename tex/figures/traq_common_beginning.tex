@@ -51,8 +51,8 @@
  
 \draw[name path=A] (0,0.5)-- ++(0.5, 0.5);
 \draw[from end of path=A, name path=B, -dot-=0, -dot-=0.5, -dot-=1] -- ++(0.25,0);
-\node[align=center,font=\fontsize{3pt}{0}\selectfont,inner sep=0mm] at (0.5, 1.25) (lossLabel) {packet loss};
-\draw[->, line width=0.05mm] (lossLabel) -- (0.5,1.05);
+\node[align=center,font=\fontsize{3pt}{0}\selectfont,inner sep=0mm] at (0.5, 0.7) (lossLabel) {packet loss};
+\draw[->, line width=0.05mm] (lossLabel) -- (0.5,0.95);
 \draw[from end of path=B, name path=C] ++(0,-0.5mm) -- ++(0,-0.95cm) -- ++(1,1);
 \draw[from end of path=C, name path=D, -dot-=0, -dot-=0.5, -dot-=1] -- ++(0.25,0);
 \draw[from end of path=D, name path=E] ++(0,-0.5mm) -- ++(0,-0.95cm) -- ++(0.5,0.5);

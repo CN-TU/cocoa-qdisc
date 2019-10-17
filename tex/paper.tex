@@ -28,7 +28,7 @@
 
 \def\tempYes{yes}
 \def\tempNo{no}
-\documentclass[10pt,sigconf,letterpaper,dvipsnames\ifx\removeHeaders\tempYes ,nonacm\fi\ifx\removeHeaders\tempNo ,anonymous\fi]{acmart}
+\documentclass[10pt,sigconf,letterpaper,dvipsnames\ifx\removeHeaders\tempYes ,nonacm\fi]{acmart}
 \acmYear{2019}
 \copyrightyear{2019}
 \acmConference{Workshop on Buffer Sizing}{December 2-3, 2019}{Stanford, California, USA}
@@ -179,13 +179,13 @@ Finally, we develop a prototype of our \gls{qdisc} and show that it can achieve 
 
 \begin{figure}[h]
 \includegraphics[width=\columnwidth]{figures/traq_illustration_too_much.pdf}
-\caption{If the buffer is too large, loss-based \glspl{cca} will keep a unnecessary standing queue. This queue is unnecessary since it is not generally required to achieve full link utilization. The consequences are longer \glspl{rtt} which can impair application performance and fluidity as well as Quality of Experience.}
+\caption{If the buffer is too large, loss-based \glspl{cca} will keep a unnecessary standing queue. This queue is unnecessary since it is not generally required to achieve full link utilization.}
 \label{fig:tooMuch}
 \end{figure}
 
 Since the goal of our algorithm is to achieve optimal throughput irrespective of the \gls{cca}, we aim to avoid the scenario depicted in \autoref{fig:tooLittle}: Here the buffer is too small, meaning that the \glspl{cca} never manages to achieve full utilization and periodically underutilizes the link, leading to, for example, a user waiting longer for a software update to finish or a video game to download on their video game console. 
 
-The other case we want to avoid is a persisting standing queue, as depicted in \autoref{fig:tooMuch}: In this case the buffer is too large meaning that optimal throughput is achieved but at the same time that an unnecessarily long standing queue is maintained. This oversized queue leads to \gls{rtt} being larger than necessary and can result in unresponsive applications. Furthermore, the buffer space has to be allocated in the bottleneck device and keeps the memory from serving a more useful purpose. 
+The other case we want to avoid is a persisting standing queue, as depicted in \autoref{fig:tooMuch}: In this case the buffer is too large meaning that optimal throughput is achieved but at the same time that an unnecessarily long standing queue is maintained. This oversized queue leads to \gls{rtt} being larger than necessary and can result in unresponsive applications and reduced Quality of Experience. Furthermore, the buffer space has to be allocated in the bottleneck device and keeps the memory from serving a more useful purpose. 
 
 These considerations lead us to designing an algorithm that dynamically measures the \gls{cca} and adapts the buffer size to reach our goal of maximum throughput and minimal delay. The basic functionality of this algorithm would be to
 \begin{enumerate}[topsep=0pt,wide,labelwidth=!,labelindent=0pt]
@@ -200,7 +200,7 @@ The solution is thus to use a \textit{\gls{gi}}: The algorithm always waits for 
 
 \begin{figure}[h]
 \includegraphics[width=\columnwidth]{{{figures/traq_intervals}}}
-\caption{Illustration of the interval mechanism used by our \gls{qdisc}. The multiplier used is $\frac{1}{2}$. Each \textit{guard interval} (GI) contains one or more intervals of which the longest one is considered the \textit{longest interval} (LI). The \gls{gi} is always at least the length of the previous \gls{li} times the multiplier. A \gls{gi} ends at the first packet loss after that is after the previous \gls{li} times the multiplier.}
+\caption{Illustration of the interval mechanism used by our \gls{qdisc} with a multiplier of $\frac{1}{2}$. Each \textit{guard interval} (GI) contains one or more intervals of which the longest one is considered the \textit{longest interval} (LI). The \gls{gi} is always at least the length of the previous \gls{li} times the multiplier. A \gls{gi} ends at the first packet loss after that is after the previous \gls{li} times the multiplier.}
 \label{fig:intervals}
 \end{figure}
 
@@ -253,7 +253,7 @@ One more challenge is posed by the following consideration: If a delay-based \gl
 
 \section{Implementation}
 
-We implement our \gls{qdisc} as an extension of the ``fq'' \gls{qdisc} \cite{dumazet_pkt_sched:_2013}. This means that when using our \gls{qdisc} also all features offered by fq are available. We add three configuration parameters to the \gls{qdisc}: the multiplier (default 1.25), the maximum buffer increase (default 2.0) and the maximum \gls{gi} duration (default 1.0\,s). We make the source code of our implementation freely available to enable reproducibility and encourage experimentation: \ifx\removeHeaders\tempYes\url{https://github.com/CN-TU/traq}\else{}[removed for anonymity]\fi .
+We implement our \gls{qdisc} as an extension of the ``fq'' \gls{qdisc} \cite{dumazet_pkt_sched:_2013}. This means that when using our \gls{qdisc} also all features offered by fq are available. We add three configuration parameters to the \gls{qdisc}: the multiplier (default 1.25), the maximum buffer increase (default 2.0) and the maximum \gls{gi} duration (default 1.0\,s). We make the source code of our implementation freely available to enable reproducibility and encourage experimentation: \url{https://github.com/CN-TU/traq}.
 
 \section{Evaluation}
 
@@ -306,7 +306,7 @@ First we evaluate if our \gls{qdisc} is able to maintain a small buffer like it 
 \label{fig:cnLong}
 \end{figure}
 
-Next we compare our \gls{qdisc} against fq\_codel. Figure\autoref{fig:fqCodelDelayLong} shows that fq\_codel keeps the queuing delay under 5\,ms. Figure\autoref{fig:fqCodelThroughputLong} shows that keeping the queuing delay that low is detrimental for achieving full throughput when using the Cubic \gls{cca}. With our \gls{qdisc} we achieve throughput that is more than 10\% higher overall, while only slightly increasing the average delay \todo{More systematic evaluation}. In addition to Cubic, we performed experiments with Reno. Here, over a 240\,s flow of 100\,Mbit/s with a delay of 50\,ms, our \gls{qdisc} achieves more than 20\% higher throughput than fq\_codel. The average \gls{rtt} for fq\_codel is 51.13\,ms while it is 96.59\,ms for our \gls{qdisc}.
+Next we compare our \gls{qdisc} against fq\_codel. Figure\autoref{fig:fqCodelDelayLong} shows that fq\_codel keeps the queuing delay under 5\,ms. Figure\autoref{fig:fqCodelThroughputLong} shows that keeping the queuing delay that low is detrimental for achieving full throughput when using the Cubic \gls{cca}. With our \gls{qdisc} we achieve throughput that is more than 10\% higher overall, while only slightly increasing the average delay. In addition to Cubic, we performed experiments with Reno. Here, over a 240\,s flow of 100\,Mbit/s with a delay of 50\,ms, our \gls{qdisc} achieves more than 20\% higher throughput than fq\_codel. The average \gls{rtt} for fq\_codel is 51.13\,ms while it is 96.59\,ms for our \gls{qdisc}.
 
 Besides fq\_codel possibly leading to lower throughput as we have shown, another problem is that for links with a small \gls{bdp} fq\_codel can keep a standing queue akin to fq since fq\_codel only wants queuing delay to fall below 5\,ms once every 100\,ms. For example, on a link with a base \gls{rtt} of 5\,ms, fq\_codel would accept a permanent standing queue of 4.9\,ms, leading to overall \gls{rtt} being doubled. 
 
@@ -327,10 +327,10 @@ Also for BBR~v1, throughput quickly reaches its maximum while no standing queue 
 
 Our goal was to design a \gls{qdisc} which achieves maximum throughput while keeping the queuing delay as small as possible. The results of the experiments, which we perform with a prototype of our \gls{qdisc}, show that there are certain common scenarios in which current state-of-the-art \glspl{qdisc} like fq, fq\_codel and cake fall short of the optimum throughput by a significant margin while our approach succeeds in leading to full utilization of the link at the bottleneck. Furthermore, the aforementioned \glspl{qdisc} also suffer from standing delays is certain scenarios which we can also mitigate with our approach. 
 
-We see this work as a first step towards adaptive queuing at bottlenecks and think that a promising direction for future work might be to explore the use of reinforcement learning. Such an approach would fingerprint a flow and choose the buffer size accordingly, maximizing a chosen objective such as high throughput with minimal delay. 
+We see this work as a first step towards adaptive queuing at bottlenecks. An interesting further improvement could be to not statically initialize the buffer with a constant 100 packets but instead use experience from previous flows. Moreover, we think that a promising direction for future work might be to explore the use of reinforcement learning. Such an approach would fingerprint a flow and choose the buffer size accordingly, maximizing a chosen objective such as high throughput with minimal delay. 
 
 \section*{Acknowledgements}
-We thank \ifx\removeHeaders\tempYes{}Gernot Vormayr\else{}[removed for anonymity]\fi{} for providing us with the \ifx\removeHeaders\tempYes{}\texttt{py-virtnet}\else{}[removed for anonymity]\fi{} toolkit for building virtual networks. 
+We thank Gernot Vormayr for providing us with a pre-release version of the \texttt{py-virtnet} toolkit for building virtual networks. 
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}
