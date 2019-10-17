@@ -178,3 +178,93 @@ parent={},%
 %
 }%
 }%
+\ifglsentryexists{gi}{}%
+{%
+\gls@defglossaryentry{gi}%
+{%
+name={GI},%
+sort={GI},%
+type={acronym},%
+first={Guard Interval\glsspace (GI)},%
+firstplural={Guard Intervals\glsspace (GIs)},%
+text={GI},%
+plural={GIs},%
+description={Guard Interval},%
+descriptionplural={Guard Interval\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Guard Interval},%
+longplural={Guard Intervals},%
+short={GI},%
+shortplural={GIs},%
+counter={page},%
+parent={},%
+%
+}%
+}%
+\ifglsentryexists{li}{}%
+{%
+\gls@defglossaryentry{li}%
+{%
+name={LI},%
+sort={LI},%
+type={acronym},%
+first={Longest Interval\glsspace (LI)},%
+firstplural={Longest Intervals\glsspace (LIs)},%
+text={LI},%
+plural={LIs},%
+description={Longest Interval},%
+descriptionplural={Longest Interval\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Longest Interval},%
+longplural={Longest Intervals},%
+short={LI},%
+shortplural={LIs},%
+counter={page},%
+parent={},%
+%
+}%
+}%
+\ifglsentryexists{bdp}{}%
+{%
+\gls@defglossaryentry{bdp}%
+{%
+name={BDP},%
+sort={BDP},%
+type={acronym},%
+first={Bandwidth Delay Product\glsspace (BDP)},%
+firstplural={Bandwidth Delay Products\glsspace (BDPs)},%
+text={BDP},%
+plural={BDPs},%
+description={Bandwidth Delay Product},%
+descriptionplural={Bandwidth Delay Product\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Bandwidth Delay Product},%
+longplural={Bandwidth Delay Products},%
+short={BDP},%
+shortplural={BDPs},%
+counter={page},%
+parent={},%
+%
+}%
+}%

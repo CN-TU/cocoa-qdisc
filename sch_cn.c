@@ -1145,7 +1145,7 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	q->orphan_mask		= 1024 - 1;
 	q->low_rate_threshold	= 550000 / 8;
 	kernel_fpu_begin();
-	q->guard_interval = 0.5;
+	q->guard_interval = 1.25;
 	q->max_increase = 2.0;
 	// 1 second
 	q->max_monitoring_interval = 1*NANOSECONDS_IN_ONE_SECOND;

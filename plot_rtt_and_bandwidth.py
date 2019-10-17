@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import subprocess
+import statistics
 plt.rcParams["font.family"] = "serif"
+plt.rcParams['pdf.fonttype'] = 42
 
 interval = 1
 pcap_file = sys.argv[1]
@@ -14,14 +16,28 @@ rtt_command = f"tshark -Y tcp.srcport!=60000&&tcp.analysis.ack_rtt!=0 -r pcaps/{
 
 receiver_pcap = 'receiver_'+('_'.join(pcap_file.split('_')[1:]))
 
+retransmissions_command = f"tshark -Y tcp.srcport==60000&&tcp.analysis.retransmission -r pcaps/{pcap_file} -Tfields -e frame.time_relative"
+
 packets_command = f"tshark -Y tcp.srcport==60000 -r pcaps/{receiver_pcap} -q -z io,stat,{interval},tcp.srcport==60000"
 
 bytes_command = f"tshark -r pcaps/{receiver_pcap} -q -z io,stat,{interval},SUM(ip.len)ip.len&&tcp.srcport==60000"
 
+bytes_command_total = f"tshark -r pcaps/{receiver_pcap} -q -z io,stat,0,SUM(ip.len)ip.len&&tcp.srcport==60000"
+
 rtt_out = subprocess.run(rtt_command.split(), check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 rtt_out = [item.split("\t") for item in rtt_out.stdout.decode("utf-8").split("\n") if item!=""]
 rtt_results = [(float(item[0]), 1000*float(item[1])) for item in rtt_out]
+print("average rtt", statistics.mean(list(zip(*rtt_results))[1]))
 # print("rtt_results", rtt_results[:100])
+
+retransmissions_out = subprocess.run(retransmissions_command.split(), check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+retransmissions_out = [item for item in retransmissions_out.stdout.decode("utf-8").split("\n") if item!=""]
+retransmissions_results = [float(item) for item in retransmissions_out]
+print("total retransmissions", len(retransmissions_results))
+
+bytes_total_out = subprocess.run(bytes_command_total.split(), check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+bytes_total_out = bytes_total_out.stdout.decode("utf-8")
+print("bytes_total_out", bytes_total_out)
 
 # packets_out = subprocess.run(packets_command.split(), check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 # packets_out = [item for item in packets_out.stdout.decode("utf-8").split("\n")[12:-3] if item!=""]
@@ -42,12 +58,12 @@ bytes_results = [(float(item[0][0]), float(item[0][1]), float(item[1])) for item
 # divided = [(first[0], first[1], first[2]/second[2]) for first, second in zip(bytes_results, packets_results)]
 # print("divided", divided)
 
-with_correct_time = [((item[0] + item[1])/2, item[2]) for item in bytes_results]
+with_correct_time = [((item[0] + item[1])/2, item[2]/1000000*8) for item in bytes_results]
 os.makedirs("plots", exist_ok=True)
 
 plt.figure(figsize=(5,2))
 plt.xlabel("Time [s]")
-plt.ylabel(f"Throughput ({interval}s window)")
+plt.ylabel(f"Throughput [Mbit/s]")
 plt.plot(*zip(*with_correct_time))
 
 plt.tight_layout()
@@ -62,6 +78,7 @@ plt.figure(figsize=(5,2))
 plt.xlabel("Time [s]")
 plt.ylabel(f"RTT [ms]")
 plt.plot(*zip(*rtt_results))
+# plt.scatter(retransmissions_results, [0]*len(retransmissions_results), marker=".", linestyle="None", color="r", s=2, edgecolors="none")
 
 plt.tight_layout()
 

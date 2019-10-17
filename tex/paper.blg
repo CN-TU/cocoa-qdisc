@@ -10,47 +10,51 @@ Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
 Reallocated global_strs (elt_size=20001) to 20 items from 10.
 Reallocated glb_str_end (elt_size=4) to 20 items from 10.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
+Warning--no journal in cardwell_bbr_2019
+Warning--no number and no volume in cardwell_bbr_2019
+Warning--no journal in cardwell_bbr_2019-1
+Warning--no number and no volume in cardwell_bbr_2019-1
 Warning--empty publisher in hoiland-jorgensen_piece_2018
 Warning--empty address in hoiland-jorgensen_piece_2018
-You've used 8 entries,
+You've used 13 entries,
             5719 wiz_defined-function locations,
-            1353 strings with 16282 characters,
-and the built_in function-call counts, 9891 in all, are:
-= -- 1319
-> -- 357
+            1380 strings with 17323 characters,
+and the built_in function-call counts, 15672 in all, are:
+= -- 1944
+> -- 698
 < -- 0
-+ -- 118
-- -- 124
-* -- 705
-:= -- 999
-add.period$ -- 41
-call.type$ -- 8
-change.case$ -- 57
-chr.to.int$ -- 8
-cite$ -- 10
-duplicate$ -- 818
-empty$ -- 574
-format.name$ -- 148
-if$ -- 2366
-int.to.chr$ -- 2
++ -- 238
+- -- 244
+* -- 1201
+:= -- 1702
+add.period$ -- 66
+call.type$ -- 13
+change.case$ -- 103
+chr.to.int$ -- 12
+cite$ -- 19
+duplicate$ -- 1243
+empty$ -- 877
+format.name$ -- 287
+if$ -- 3643
+int.to.chr$ -- 3
 int.to.str$ -- 1
-missing$ -- 26
-newline$ -- 134
-num.names$ -- 64
-pop$ -- 264
+missing$ -- 38
+newline$ -- 186
+num.names$ -- 103
+pop$ -- 427
 preamble$ -- 1
-purify$ -- 129
+purify$ -- 218
 quote$ -- 0
-skip$ -- 299
+skip$ -- 453
 stack$ -- 0
-substring$ -- 769
-swap$ -- 92
+substring$ -- 1124
+swap$ -- 133
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 184
-warning$ -- 2
-while$ -- 66
+type$ -- 289
+warning$ -- 6
+while$ -- 99
 width$ -- 0
-write$ -- 206
-(There were 2 warnings)
+write$ -- 301
+(There were 6 warnings)

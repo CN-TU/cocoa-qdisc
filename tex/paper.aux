@@ -27,24 +27,94 @@
 \@newglossary{acronym}{alg}{acr}{acn}
 \@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\citation{cardwell_bbr_2019-1,cardwell_bbr_2019}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces If the buffer is too small, loss-based \glspl {cca} will not be able to fully utilize the link since they send too few data following the multiplicative decrease that occurs after packet loss.\relax }}{2}{figure.caption.3}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:tooLittle}{{1}{2}{If the buffer is too small, loss-based \glspl {cca} will not be able to fully utilize the link since they send too few data following the multiplicative decrease that occurs after packet loss.\relax }{figure.caption.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces If the buffer is too large, loss-based \glspl {cca} will keep a unnecessary standing queue. This queue is unnecessary since it is not generally required to achieve full link utilization. The consequences are longer \glspl {rtt} which can impair application performance and fluidity as well as Quality of Experience.\relax }}{2}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:tooMuch}{{2}{2}{If the buffer is too large, loss-based \glspl {cca} will keep a unnecessary standing queue. This queue is unnecessary since it is not generally required to achieve full link utilization. The consequences are longer \glspl {rtt} which can impair application performance and fluidity as well as Quality of Experience.\relax }{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Concept}{2}{section.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Illustration of the interval mechanism used by our \gls {qdisc}. The multiplier used is $\frac  {1}{2}$. Each \textit  {guard interval} (GI) contains one or more intervals of which the longest one is considered the \textit  {longest interval} (LI). The \gls {gi} is always at least the length of the previous \gls {li} times the multiplier. A \gls {gi} ends at the first packet loss after that is after the previous \gls {li} times the multiplier.\relax }}{3}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:intervals}{{3}{3}{Illustration of the interval mechanism used by our \gls {qdisc}. The multiplier used is $\frac {1}{2}$. Each \textit {guard interval} (GI) contains one or more intervals of which the longest one is considered the \textit {longest interval} (LI). The \gls {gi} is always at least the length of the previous \gls {li} times the multiplier. A \gls {gi} ends at the first packet loss after that is after the previous \gls {li} times the multiplier.\relax }{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Choice of the multiplier}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Procedure that is executed when a new packet is received to be enqueued.\relax }}{3}{algorithm.1}\protected@file@percent }
+\newlabel{alg:enqueue}{{1}{3}{Procedure that is executed when a new packet is received to be enqueued.\relax }{algorithm.1}{}}
+\citation{brakmo_tcp_1995}
+\citation{borman_tcp_2014}
+\citation{kuhlewind_quic_2018}
+\citation{dumazet_pkt_sched:_2013}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Maximum buffer increase}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Maximum \gls {gi}}{4}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Implementation}{4}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Evaluation}{4}{section.4}\protected@file@percent }
+\newlabel{fig:fqThroughput}{{4a}{4}{Subfigure 4a}{subfigure.4.1}{}}
+\newlabel{sub@fig:fqThroughput}{{(a)}{a}{Subfigure 4a\relax }{subfigure.4.1}{}}
+\newlabel{fig:fqDelay}{{4b}{4}{Subfigure 4b}{subfigure.4.2}{}}
+\newlabel{sub@fig:fqDelay}{{(b)}{b}{Subfigure 4b\relax }{subfigure.4.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Throughput (\ref  {fig:fqThroughput}) and delay (\ref  {fig:fqDelay}) of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\tmspace  +\thinmuskip {.1667em}Mbit/s but it is halved after 30\tmspace  +\thinmuskip {.1667em}s. The delay is 10\tmspace  +\thinmuskip {.1667em}ms. It is clear that there is a standing queue and after the bandwidth halves, the minimum delay is 100\tmspace  +\thinmuskip {.1667em}ms even though 10\tmspace  +\thinmuskip {.1667em}ms would be the possible.\relax }}{4}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:fq}{{4}{4}{Throughput (\ref {fig:fqThroughput}) and delay (\ref {fig:fqDelay}) of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. It is clear that there is a standing queue and after the bandwidth halves, the minimum delay is 100\,ms even though 10\,ms would be the possible.\relax }{figure.caption.6}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Throughput of the fq \gls {qdisc} }}}{4}{subfigure.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Delay of the fq \gls {qdisc}. }}}{4}{subfigure.4.2}\protected@file@percent }
 \bibstyle{ACM-Reference-Format}
 \bibdata{bibliography}
-\bibcite{cardwell_bbr:_2016}{{1}{2016}{{Cardwell et~al\unhbox \voidb@x \hbox {.}}}{{Cardwell, Cheng, Gunn, Yeganeh, and Jacobson}}}
-\bibcite{dumazet_pkt_sched:_2013}{{2}{2013}{{Dumazet}}{{Dumazet}}}
-\bibcite{ha_cubic:_2008}{{3}{2008}{{Ha et~al\unhbox \voidb@x \hbox {.}}}{{Ha, Rhee, and Xu}}}
-\bibcite{hoiland-jorgensen_piece_2018}{{4}{2018}{{H\IeC {\o }iland-J\IeC {\o }rgensen et~al\unhbox \voidb@x \hbox {.}}}{{H\IeC {\o }iland-J\IeC {\o }rgensen, T\IeC {\"a}ht, and Morton}}}
-\bibcite{jacobson_congestion_1988}{{5}{1988}{{Jacobson}}{{Jacobson}}}
-\bibcite{nichols_controlling_2012}{{6}{2012}{{Nichols and Jacobson}}{{Nichols and Jacobson}}}
-\bibcite{shreedhar_efficient_1996}{{7}{1996}{{Shreedhar and Varghese}}{{Shreedhar and Varghese}}}
-\bibcite{taht_flow_2018}{{8}{2018}{{Taht et~al\unhbox \voidb@x \hbox {.}}}{{Taht, Gettys, Hoeiland-Joergensen, Hoeiland-Joergensen, Dumazet, Gettys, Dumazet, and McKenney}}}
+\bibcite{borman_tcp_2014}{{1}{2014}{{Borman et~al\unhbox \voidb@x \hbox {.}}}{{Borman, Scheffenegger, and Jacobson}}}
+\bibcite{brakmo_tcp_1995}{{2}{1995}{{Brakmo and Peterson}}{{Brakmo and Peterson}}}
+\bibcite{cardwell_bbr:_2016}{{3}{2016}{{Cardwell et~al\unhbox \voidb@x \hbox {.}}}{{Cardwell, Cheng, Gunn, Yeganeh, and Jacobson}}}
+\bibcite{cardwell_bbr_2019}{{4}{2019a}{{Cardwell et~al\unhbox \voidb@x \hbox {.}}}{{Cardwell, Cheng, Yeganeh, Jha, Seung, Swett, Vasiliev, Wu, Mathis, and Jacobson}}}
+\bibcite{cardwell_bbr_2019-1}{{5}{2019b}{{Cardwell et~al\unhbox \voidb@x \hbox {.}}}{{Cardwell, Cheng, Yeganeh, Swett, Vasiliev, Jha, Seung, Mathis, and Jacobson}}}
+\bibcite{dumazet_pkt_sched:_2013}{{6}{2013}{{Dumazet}}{{Dumazet}}}
+\newlabel{fig:cnThroughput}{{5a}{5}{Subfigure 5a}{subfigure.5.1}{}}
+\newlabel{sub@fig:cnThroughput}{{(a)}{a}{Subfigure 5a\relax }{subfigure.5.1}{}}
+\newlabel{fig:cnDelay}{{5b}{5}{Subfigure 5b}{subfigure.5.2}{}}
+\newlabel{sub@fig:cnDelay}{{(b)}{b}{Subfigure 5b\relax }{subfigure.5.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Throughput (\ref  {fig:cnThroughput}) and delay (\ref  {fig:cnDelay}) of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\tmspace  +\thinmuskip {.1667em}Mbit/s but it is halved after 30\tmspace  +\thinmuskip {.1667em}s. The delay is 10\tmspace  +\thinmuskip {.1667em}ms. Our \gls {qdisc} manages to keep the queuing delay minimal while achieving the same throughput as with an oversized buffer.\relax }}{5}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:cn}{{5}{5}{Throughput (\ref {fig:cnThroughput}) and delay (\ref {fig:cnDelay}) of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. Our \gls {qdisc} manages to keep the queuing delay minimal while achieving the same throughput as with an oversized buffer.\relax }{figure.caption.7}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Throughput of our \gls {qdisc} }}}{5}{subfigure.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Delay of our \gls {qdisc}. }}}{5}{subfigure.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{5}{section.5}\protected@file@percent }
+\newlabel{fig:cnThroughput2}{{6a}{5}{Subfigure 6a}{subfigure.6.1}{}}
+\newlabel{sub@fig:cnThroughput2}{{(a)}{a}{Subfigure 6a\relax }{subfigure.6.1}{}}
+\newlabel{fig:cnDelay2}{{6b}{5}{Subfigure 6b}{subfigure.6.2}{}}
+\newlabel{sub@fig:cnDelay2}{{(b)}{b}{Subfigure 6b\relax }{subfigure.6.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Throughput (\ref  {fig:cnThroughput2}) and delay (\ref  {fig:cnDelay2}) of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\tmspace  +\thinmuskip {.1667em}Mbit/s but it is doubled after 30\tmspace  +\thinmuskip {.1667em}s. The delay is 10\tmspace  +\thinmuskip {.1667em}ms. Also a sudden large increase of bandwidth is handled well by our \gls {qdisc}.\relax }}{5}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:cn2}{{6}{5}{Throughput (\ref {fig:cnThroughput2}) and delay (\ref {fig:cnDelay2}) of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is doubled after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by our \gls {qdisc}.\relax }{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Throughput of our \gls {qdisc} }}}{5}{subfigure.6.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Delay of our \gls {qdisc}. }}}{5}{subfigure.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{5}{section*.14}\protected@file@percent }
+\bibcite{ha_cubic:_2008}{{7}{2008}{{Ha et~al\unhbox \voidb@x \hbox {.}}}{{Ha, Rhee, and Xu}}}
+\bibcite{hoiland-jorgensen_piece_2018}{{8}{2018}{{H\IeC {\o }iland-J\IeC {\o }rgensen et~al\unhbox \voidb@x \hbox {.}}}{{H\IeC {\o }iland-J\IeC {\o }rgensen, T\IeC {\"a}ht, and Morton}}}
+\bibcite{jacobson_congestion_1988}{{9}{1988}{{Jacobson}}{{Jacobson}}}
+\bibcite{kuhlewind_quic_2018}{{10}{2018}{{K\IeC {\"u}hlewind and Trammell}}{{K\IeC {\"u}hlewind and Trammell}}}
+\bibcite{nichols_controlling_2012}{{11}{2012}{{Nichols and Jacobson}}{{Nichols and Jacobson}}}
+\bibcite{shreedhar_efficient_1996}{{12}{1996}{{Shreedhar and Varghese}}{{Shreedhar and Varghese}}}
+\bibcite{taht_flow_2018}{{13}{2018}{{Taht et~al\unhbox \voidb@x \hbox {.}}}{{Taht, Gettys, Hoeiland-Joergensen, Hoeiland-Joergensen, Dumazet, Gettys, Dumazet, and McKenney}}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{4.65pt}
 \newlabel{tocindent2}{11.49998pt}
-\newlabel{tocindent3}{20.22pt}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Concept}{2}{section.2}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Procedure which determines when to synchronize the neural network weights from the global weights in case of congestion control. We assume that the window at time step $t$ is stored in a list $l_\text  {windows}$ and that the number of bytes sent in each time step is stored in $l_\text  {sent}$. Alternatively to this procedure one can simply synchronize the weights after each $t_\text  {max}$ actions where $t_\text  {max}$ is an arbitrarily chosen integer greater than 0.\relax }}{2}{algorithm.1}\protected@file@percent }
-\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{alg:update}{{1}{2}{Procedure which determines when to synchronize the neural network weights from the global weights in case of congestion control. We assume that the window at time step $t$ is stored in a list $l_\text {windows}$ and that the number of bytes sent in each time step is stored in $l_\text {sent}$. Alternatively to this procedure one can simply synchronize the weights after each $t_\text {max}$ actions where $t_\text {max}$ is an arbitrarily chosen integer greater than 0.\relax }{algorithm.1}{}}
-\@writefile{toc}{\contentsline {section}{References}{2}{section*.5}\protected@file@percent }
-\newlabel{TotPages}{{2}{2}{}{page.2}{}}
+\newlabel{tocindent3}{0pt}
+\newlabel{fig:cnThroughputLong}{{8a}{6}{Subfigure 8a}{subfigure.8.1}{}}
+\newlabel{sub@fig:cnThroughputLong}{{(a)}{a}{Subfigure 8a\relax }{subfigure.8.1}{}}
+\newlabel{fig:cnDelayLong}{{8b}{6}{Subfigure 8b}{subfigure.8.2}{}}
+\newlabel{sub@fig:cnDelayLong}{{(b)}{b}{Subfigure 8b\relax }{subfigure.8.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Throughput (\ref  {fig:cnThroughputLong}) and delay (\ref  {fig:cnDelayLong}) of a Cubic flow that is managed by our \gls {qdisc} at the bottleneck. The bandwidth is 100\tmspace  +\thinmuskip {.1667em}Mbit/s. The delay is 100\tmspace  +\thinmuskip {.1667em}ms. The average \gls {rtt} is 129.45\tmspace  +\thinmuskip {.1667em}ms. Total throughput is 2893\tmspace  +\thinmuskip {.1667em}MB.\relax }}{6}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:cnLong}{{8}{6}{Throughput (\ref {fig:cnThroughputLong}) and delay (\ref {fig:cnDelayLong}) of a Cubic flow that is managed by our \gls {qdisc} at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls {rtt} is 129.45\,ms. Total throughput is 2893\,MB.\relax }{figure.caption.10}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Throughput of our \gls {qdisc} }}}{6}{subfigure.8.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Delay of our \gls {qdisc}. }}}{6}{subfigure.8.2}\protected@file@percent }
+\newlabel{fig:cnThroughputBBR}{{9a}{6}{Subfigure 9a}{subfigure.9.1}{}}
+\newlabel{sub@fig:cnThroughputBBR}{{(a)}{a}{Subfigure 9a\relax }{subfigure.9.1}{}}
+\newlabel{fig:cnDelayBBR}{{9b}{6}{Subfigure 9b}{subfigure.9.2}{}}
+\newlabel{sub@fig:cnDelayBBR}{{(b)}{b}{Subfigure 9b\relax }{subfigure.9.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Throughput (\ref  {fig:cnThroughputBBR}) and delay (\ref  {fig:cnDelayBBR}) of a BBR\nonbreakingspace v1 flow that is managed by our \gls {qdisc} at the bottleneck. The bandwidth is 50\tmspace  +\thinmuskip {.1667em}Mbit/s. The delay is 10\tmspace  +\thinmuskip {.1667em}ms and it is cut by half after 30\tmspace  +\thinmuskip {.1667em}s.\relax }}{6}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:cnBBR}{{9}{6}{Throughput (\ref {fig:cnThroughputBBR}) and delay (\ref {fig:cnDelayBBR}) of a BBR~v1 flow that is managed by our \gls {qdisc} at the bottleneck. The bandwidth is 50\,Mbit/s. The delay is 10\,ms and it is cut by half after 30\,s.\relax }{figure.caption.11}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Throughput of our \gls {qdisc} }}}{6}{subfigure.9.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Delay of our \gls {qdisc}. }}}{6}{subfigure.9.2}\protected@file@percent }
+\newlabel{fig:fqCodelThroughputLong}{{7a}{6}{Subfigure 7a}{subfigure.7.1}{}}
+\newlabel{sub@fig:fqCodelThroughputLong}{{(a)}{a}{Subfigure 7a\relax }{subfigure.7.1}{}}
+\newlabel{fig:fqCodelDelayLong}{{7b}{6}{Subfigure 7b}{subfigure.7.2}{}}
+\newlabel{sub@fig:fqCodelDelayLong}{{(b)}{b}{Subfigure 7b\relax }{subfigure.7.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Throughput (\ref  {fig:fqCodelThroughputLong}) and delay (\ref  {fig:fqCodelDelayLong}) of a Cubic flow that is managed by fq\_codel at the bottleneck. The bandwidth is 100\tmspace  +\thinmuskip {.1667em}Mbit/s. The delay is 100\tmspace  +\thinmuskip {.1667em}ms. The average \gls {rtt} is 101.36\tmspace  +\thinmuskip {.1667em}ms. Total throughput is 2615\tmspace  +\thinmuskip {.1667em}MB.\relax }}{6}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:fqCodel}{{7}{6}{Throughput (\ref {fig:fqCodelThroughputLong}) and delay (\ref {fig:fqCodelDelayLong}) of a Cubic flow that is managed by fq\_codel at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls {rtt} is 101.36\,ms. Total throughput is 2615\,MB.\relax }{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Throughput of our \gls {qdisc} }}}{6}{subfigure.7.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Delay of our \gls {qdisc}. }}}{6}{subfigure.7.2}\protected@file@percent }
+\newlabel{TotPages}{{6}{6}{}{page.6}{}}

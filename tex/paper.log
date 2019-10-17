@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2019/dev/Debian) (preloaded format=pdflatex 2019.8.2)  14 OCT 2019 17:09
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2019/dev/Debian) (preloaded format=pdflatex 2019.8.2)  17 OCT 2019 16:19
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -36,6 +36,7 @@ Package acmart Info: Explicitly selecting natbib mode on input line 122.
 Package acmart Info: Not using anonymous mode on input line 130.
 Package acmart Info: Not using timestamp mode on input line 138.
 Package acmart Info: Not using authordraft mode on input line 148.
+Package acmart Info: Using anonymous mode on input line 157.
 Class acmart Info: Using format sigconf, number 4 on input line 157.
 Class acmart Info: Using fontsize 10pt on input line 215.
 
@@ -831,59 +832,15 @@ Package: inputenc 2018/08/11 v1.3c Input encoding file
 \inpenc@prehook=\toks32
 \inpenc@posthook=\toks33
 )
-(/usr/share/texlive/texmf-dist/tex/latex/multirow/multirow.sty
-Package: multirow 2019/01/01 v2.4 Span multiple rows of a table
-\multirow@colwidth=\skip69
-\multirow@cntb=\count143
-\multirow@dima=\skip70
-\bigstrutjot=\dimen156
-)
-(/usr/share/texlive/texmf-dist/tex/latex/blindtext/blindtext.sty
-Package: blindtext 2012/01/06 V2.0 blindtext-Package
-
-(/usr/share/texlive/texmf-dist/tex/latex/tools/xspace.sty
-Package: xspace 2014/10/28 v1.13 Space after command names (DPC,MH)
-)
-\c@blindtext=\count144
-\c@Blindtext=\count145
-\c@blind@countparstart=\count146
-\blind@countxx=\count147
-\blindtext@numBlindtext=\count148
-\blind@countyy=\count149
-\c@blindlist=\count150
-\c@blindlistlevel=\count151
-\c@blindlist@level=\count152
-\blind@listitem=\count153
-\c@blind@listcount=\count154
-\c@blind@levelcount=\count155
-\blind@mathformula=\count156
-\blind@Mathformula=\count157
-\c@blind@randomcount=\count158
-\c@blind@randommax=\count159
-\c@blind@pangramcount=\count160
-\c@blind@pangrammax=\count161
-)
-(/usr/share/texlive/texmf-dist/tex/latex/soul/soul.sty
-Package: soul 2003/11/17 v2.4 letterspacing/underlining (mf)
-\SOUL@word=\toks34
-\SOUL@lasttoken=\toks35
-\SOUL@cmds=\toks36
-\SOUL@buffer=\toks37
-\SOUL@token=\toks38
-\SOUL@spaceskip=\skip71
-\SOUL@ttwidth=\dimen157
-\SOUL@uldp=\dimen158
-\SOUL@ulht=\dimen159
-)
 (/usr/share/texlive/texmf-dist/tex/latex/enumitem/enumitem.sty
 Package: enumitem 2019/02/04 v3.8 Customized lists
-\enitkv@toks@=\toks39
-\labelindent=\skip72
-\enit@outerparindent=\dimen160
-\enit@toks=\toks40
+\enitkv@toks@=\toks34
+\labelindent=\skip69
+\enit@outerparindent=\dimen156
+\enit@toks=\toks35
 \enit@inbox=\box35
-\enit@count@id=\count162
-\enitdp@description=\count163
+\enit@count@id=\count143
+\enitdp@description=\count144
 )
 (/usr/share/texlive/texmf-dist/tex/latex/algorithmicx/algorithmicx.sty
 Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
@@ -892,16 +849,16 @@ Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
 Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
 )
 Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
-\c@ALG@line=\count164
-\c@ALG@rem=\count165
-\c@ALG@nested=\count166
-\ALG@tlm=\skip73
-\ALG@thistlm=\skip74
-\c@ALG@Lnr=\count167
-\c@ALG@blocknr=\count168
-\c@ALG@storecount=\count169
-\c@ALG@tmpcounter=\count170
-\ALG@tmplength=\skip75
+\c@ALG@line=\count145
+\c@ALG@rem=\count146
+\c@ALG@nested=\count147
+\ALG@tlm=\skip70
+\ALG@thistlm=\skip71
+\c@ALG@Lnr=\count148
+\c@ALG@blocknr=\count149
+\c@ALG@storecount=\count150
+\c@ALG@tmpcounter=\count151
+\ALG@tmplength=\skip72
 ) (/usr/share/texlive/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
 Package: algpseudocode 
 
@@ -909,16 +866,32 @@ Document Style - pseudocode environments for use with the `algorithmicx' style
 ) (/usr/share/texlive/texmf-dist/tex/latex/algorithms/algorithm.sty
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
 nment
-\@float@every@algorithm=\toks41
-\c@algorithm=\count171
+\@float@every@algorithm=\toks36
+\c@algorithm=\count152
+)
+(/usr/share/texlive/texmf-dist/tex/latex/subfig/subfig.sty
+Package: subfig 2005/06/28 ver: 1.3 subfig package
+\c@KVtest=\count153
+\sf@farskip=\skip73
+\sf@captopadj=\dimen157
+\sf@capskip=\skip74
+\sf@nearskip=\skip75
+\c@subfigure=\count154
+\c@subfigure@save=\count155
+\c@lofdepth=\count156
+\c@subtable=\count157
+\c@subtable@save=\count158
+\c@lotdepth=\count159
+\sf@top=\skip76
+\sf@bottom=\skip77
 )
 (/usr/share/texlive/texmf-dist/tex/latex/glossaries/base/glossaries.sty
 Package: glossaries 2019/01/06 v4.42 (NLCT)
 
 (/usr/share/texlive/texmf-dist/tex/latex/mfirstuc/mfirstuc.sty
 Package: mfirstuc 2017/11/14 v2.06 (NLCT)
-\@glsmfirst=\toks42
-\@glsmrest=\toks43
+\@glsmfirst=\toks37
+\@glsmrest=\toks38
 )
 (/usr/share/texlive/texmf-dist/tex/latex/xfor/xfor.sty
 Package: xfor 2009/02/05 v1.05 (NLCT)
@@ -928,7 +901,7 @@ Package: datatool-base 2018/12/07 v2.31 (NLCT)
 
 (/usr/share/texlive/texmf-dist/tex/latex/substr/substr.sty
 Package: substr 2009/10/20 v1.2 Handle substrings
-\c@su@anzahl=\count172
+\c@su@anzahl=\count160
 )
 (/usr/share/texlive/texmf-dist/tex/latex/datatool/datatool-fp.sty
 Package: datatool-fp 2018/12/07 v2.31 (NLCT)
@@ -939,19 +912,19 @@ Package: fp 1995/04/02
 `Fixed Point Package', Version 0.8, April 2, 1995 (C) Michael Mehlich
 (/usr/share/texlive/texmf-dist/tex/latex/fp/defpattern.sty
 Package: defpattern 1994/10/12
-\actioncount=\count173
+\actioncount=\count161
 )
 (/usr/share/texlive/texmf-dist/tex/latex/fp/fp-basic.sty
 Package: fp-basic 1996/05/13
-\FP@xs=\count174
-\FP@xia=\count175
-\FP@xib=\count176
-\FP@xfa=\count177
-\FP@xfb=\count178
-\FP@rega=\count179
-\FP@regb=\count180
-\FP@regs=\count181
-\FP@times=\count182
+\FP@xs=\count162
+\FP@xia=\count163
+\FP@xib=\count164
+\FP@xfa=\count165
+\FP@xfb=\count166
+\FP@rega=\count167
+\FP@regb=\count168
+\FP@regs=\count169
+\FP@times=\count170
 )
 (/usr/share/texlive/texmf-dist/tex/latex/fp/fp-addons.sty
 Package: fp-addons 1995/03/15
@@ -970,7 +943,7 @@ Package: fp-pas 1994/08/29
 )
 (/usr/share/texlive/texmf-dist/tex/latex/fp/fp-random.sty
 Package: fp-random 1995/02/23
-\FPseed=\count183
+\FPseed=\count171
 )
 (/usr/share/texlive/texmf-dist/tex/latex/fp/fp-eqn.sty
 Package: fp-eqn 1995/04/03
@@ -981,94 +954,94 @@ Package: fp-upn 1996/10/21
 (/usr/share/texlive/texmf-dist/tex/latex/fp/fp-eval.sty
 Package: fp-eval 1995/04/03
 )))
-\@dtl@toks=\toks44
-\@dtl@tmpcount=\count184
-\dtl@tmplength=\skip76
-\dtl@sortresult=\count185
-\@dtl@numgrpsepcount=\count186
-\@dtl@datatype=\count187
-\dtl@codeA=\count188
-\dtl@codeB=\count189
-\@dtl@foreach@level=\count190
+\@dtl@toks=\toks39
+\@dtl@tmpcount=\count172
+\dtl@tmplength=\skip78
+\dtl@sortresult=\count173
+\@dtl@numgrpsepcount=\count174
+\@dtl@datatype=\count175
+\dtl@codeA=\count176
+\dtl@codeB=\count177
+\@dtl@foreach@level=\count178
 )
 (/usr/share/texlive/texmf-dist/tex/latex/glossaries/base/glossaries-compatible-
 307.sty
 Package: glossaries-compatible-307 2019/01/06 v4.42 (NLCT)
 )
-\gls@level=\count191
-\@gls@tmpb=\toks45
-\gls@tmplen=\skip77
-\glskeylisttok=\toks46
-\glslabeltok=\toks47
-\glsshorttok=\toks48
-\glslongtok=\toks49
+\gls@level=\count179
+\@gls@tmpb=\toks40
+\gls@tmplen=\skip79
+\glskeylisttok=\toks41
+\glslabeltok=\toks42
+\glsshorttok=\toks43
+\glslongtok=\toks44
 
 (/usr/share/texlive/texmf-dist/tex/latex/glossaries/styles/glossary-hypernav.st
 y
 Package: glossary-hypernav 2019/01/06 v4.42 (NLCT)
 ) (/usr/share/texlive/texmf-dist/tex/latex/glossaries/styles/glossary-list.sty
 Package: glossary-list 2019/01/06 v4.42 (NLCT)
-\glslistdottedwidth=\skip78
+\glslistdottedwidth=\skip80
 ) (/usr/share/texlive/texmf-dist/tex/latex/glossaries/styles/glossary-long.sty
 Package: glossary-long 2019/01/06 v4.42 (NLCT)
 
 (/usr/share/texlive/texmf-dist/tex/latex/tools/longtable.sty
 Package: longtable 2014/10/28 v4.11 Multi-page Table package (DPC)+ FMi change
-\LTleft=\skip79
-\LTright=\skip80
-\LTpre=\skip81
-\LTpost=\skip82
-\LTchunksize=\count192
-\LTcapwidth=\dimen161
+\LTleft=\skip81
+\LTright=\skip82
+\LTpre=\skip83
+\LTpost=\skip84
+\LTchunksize=\count180
+\LTcapwidth=\dimen158
 \LT@head=\box36
 \LT@firsthead=\box37
 \LT@foot=\box38
 \LT@lastfoot=\box39
-\LT@cols=\count193
-\LT@rows=\count194
-\c@LT@tables=\count195
-\c@LT@chunks=\count196
-\LT@p@ftn=\toks50
+\LT@cols=\count181
+\LT@rows=\count182
+\c@LT@tables=\count183
+\c@LT@chunks=\count184
+\LT@p@ftn=\toks45
 )
-\glsdescwidth=\skip83
-\glspagelistwidth=\skip84
+\glsdescwidth=\skip85
+\glspagelistwidth=\skip86
 )
 (/usr/share/texlive/texmf-dist/tex/latex/glossaries/styles/glossary-super.sty
 Package: glossary-super 2019/01/06 v4.42 (NLCT)
 
 (/usr/share/texlive/texmf-dist/tex/latex/supertabular/supertabular.sty
 Package: supertabular 2004/02/20 v4.1e the supertabular environment
-\c@tracingst=\count266
-\ST@wd=\dimen162
-\ST@rightskip=\skip85
-\ST@leftskip=\skip86
-\ST@parfillskip=\skip87
-\ST@pageleft=\dimen163
-\ST@headht=\dimen164
-\ST@tailht=\dimen165
-\ST@pagesofar=\dimen166
-\ST@pboxht=\dimen167
-\ST@lineht=\dimen168
-\ST@stretchht=\dimen169
-\ST@prevht=\dimen170
-\ST@toadd=\dimen171
-\ST@dimen=\dimen172
+\c@tracingst=\count185
+\ST@wd=\dimen159
+\ST@rightskip=\skip87
+\ST@leftskip=\skip88
+\ST@parfillskip=\skip89
+\ST@pageleft=\dimen160
+\ST@headht=\dimen161
+\ST@tailht=\dimen162
+\ST@pagesofar=\dimen163
+\ST@pboxht=\dimen164
+\ST@lineht=\dimen165
+\ST@stretchht=\dimen166
+\ST@prevht=\dimen167
+\ST@toadd=\dimen168
+\ST@dimen=\dimen169
 \ST@pbox=\box40
 ))
 (/usr/share/texlive/texmf-dist/tex/latex/glossaries/styles/glossary-tree.sty
 Package: glossary-tree 2019/01/06 v4.42 (NLCT)
-\glstreeindent=\skip88
+\glstreeindent=\skip90
 ))
-Package hyperref Info: Option `pdfdisplaydoctitle' set `true' on input line 100
-.
-\c@theorem=\count267
+Package hyperref Info: Option `pdfdisplaydoctitle' set `true' on input line 94.
+
+\c@theorem=\count186
 
 (/usr/share/texlive/texmf-dist/tex/latex/preprint/balance.sty
 Package: balance 1999/02/23 4.3 (PWD)
-\oldvsize=\dimen173
+\oldvsize=\dimen170
 )
 Excluding comment 'screenonly' Include comment 'printonly'
-Include comment 'anonsuppress'
+Excluding comment 'anonsuppress' Excluding comment 'acks'
 
 LaTeX Warning: Unused global option(s):
     [letterpaper].
@@ -1076,103 +1049,102 @@ LaTeX Warning: Unused global option(s):
 (./paper.aux)
 \openout1 = `paper.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/nxlmi/m/it on input line 100.
-LaTeX Font Info:    Try loading font information for OML+nxlmi on input line 10
-0.
+LaTeX Font Info:    Checking defaults for OML/nxlmi/m/it on input line 94.
+LaTeX Font Info:    Try loading font information for OML+nxlmi on input line 94
+.
  (/usr/share/texlive/texmf-dist/tex/latex/newtx/omlnxlmi.fd
 File: omlnxlmi.fd 2013/11/19 Fontinst v1.933 font definitions for OML/nxlmi.
 )
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for U/ntxexa/m/n on input line 100.
-LaTeX Font Info:    Try loading font information for U+ntxexa on input line 100
-.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 94.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 94.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 94.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 94.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for U/ntxexa/m/n on input line 94.
+LaTeX Font Info:    Try loading font information for U+ntxexa on input line 94.
+
 
 (/usr/share/texlive/texmf-dist/tex/latex/newtx/untxexa.fd
 File: untxexa.fd 2012/04/16 Fontinst v1.933 font definitions for U/ntxexa.
 )
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 100.
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 100.
-
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 94.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 94.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 94.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 94.
 
 (/usr/share/texlive/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for LMS/ntxsy/m/n on input line 100.
-LaTeX Font Info:    Try loading font information for LMS+ntxsy on input line 10
-0.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for LMS/ntxsy/m/n on input line 94.
+LaTeX Font Info:    Try loading font information for LMS+ntxsy on input line 94
+.
 
 (/usr/share/texlive/texmf-dist/tex/latex/newtx/lmsntxsy.fd
 File: lmsntxsy.fd 2016/07/02 Fontinst v1.933 font definitions for LMS/ntxsy.
 )
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for LMX/ntxexx/m/n on input line 100.
-LaTeX Font Info:    Try loading font information for LMX+ntxexx on input line 1
-00.
+LaTeX Font Info:    ... okay on input line 94.
+LaTeX Font Info:    Checking defaults for LMX/ntxexx/m/n on input line 94.
+LaTeX Font Info:    Try loading font information for LMX+ntxexx on input line 9
+4.
 
 (/usr/share/texlive/texmf-dist/tex/latex/newtx/lmxntxexx.fd
 File: lmxntxexx.fd 2016/07/03 Fontinst v1.933 font definitions for LMX/ntxexx.
 )
-LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    ... okay on input line 94.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 8.0pt on input line 100.
+(Font)              scaled to size 8.0pt on input line 94.
 LaTeX Font Info:    Try loading font information for OT1+LinuxLibertineT-TLF on
- input line 100.
+ input line 94.
 
 (/usr/share/texlive/texmf-dist/tex/latex/libertine/OT1LinuxLibertineT-TLF.fd
 File: OT1LinuxLibertineT-TLF.fd 2017/03/20 (autoinst) Font definitions for OT1/
 LinuxLibertineT-TLF.
 )
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 8.0pt on input line 100.
+(Font)              scaled to size 8.0pt on input line 94.
 <<ot1.cmap>>
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 6.2pt on input line 100.
+(Font)              scaled to size 6.2pt on input line 94.
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 5.5pt on input line 100.
+(Font)              scaled to size 5.5pt on input line 94.
 <<oml.cmap>>
-LaTeX Font Info:    Try loading font information for U+msa on input line 100.
+LaTeX Font Info:    Try loading font information for U+msa on input line 94.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 100.
+LaTeX Font Info:    Try loading font information for U+msb on input line 94.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Try loading font information for U+ntxmia on input line 100
-.
+LaTeX Font Info:    Try loading font information for U+ntxmia on input line 94.
+
 
 (/usr/share/texlive/texmf-dist/tex/latex/newtx/untxmia.fd
 File: untxmia.fd 2018/04/14 Fontinst v1.933 font definitions for U/ntxmia.
 )
-LaTeX Font Info:    Try loading font information for U+ntxsym on input line 100
-.
+LaTeX Font Info:    Try loading font information for U+ntxsym on input line 94.
+
 
 (/usr/share/texlive/texmf-dist/tex/latex/newtx/untxsym.fd
 File: untxsym.fd 2015/03/20 Fontinst v1.933 font definitions for U/ntxsym.
 )
-LaTeX Font Info:    Try loading font information for U+ntxsyc on input line 100
-.
+LaTeX Font Info:    Try loading font information for U+ntxsyc on input line 94.
+
 
 (/usr/share/texlive/texmf-dist/tex/latex/newtx/untxsyc.fd
 File: untxsyc.fd 2012/04/12 Fontinst v1.933 font definitions for U/ntxsyc.
 )
-LaTeX Info: Redefining \microtypecontext on input line 100.
+LaTeX Info: Redefining \microtypecontext on input line 94.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -1189,7 +1161,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 
 ABD: EveryShipout initializing macros
 \AtBeginShipoutBox=\box41
-Package hyperref Info: Link coloring OFF on input line 100.
+Package hyperref Info: Link coloring OFF on input line 94.
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
@@ -1197,11 +1169,11 @@ Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
 (/usr/share/texlive/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
 Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
-\c@section@level=\count268
+\c@section@level=\count187
 )
-LaTeX Info: Redefining \ref on input line 100.
-LaTeX Info: Redefining \pageref on input line 100.
-LaTeX Info: Redefining \nameref on input line 100.
+LaTeX Info: Redefining \ref on input line 94.
+LaTeX Info: Redefining \pageref on input line 94.
+LaTeX Info: Redefining \nameref on input line 94.
 
 (./paper.out) (./paper.out)
 \@outlinefile=\write4
@@ -1210,17 +1182,17 @@ LaTeX Info: Redefining \nameref on input line 100.
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count269
-\scratchdimen=\dimen174
+\scratchcounter=\count188
+\scratchdimen=\dimen171
 \scratchbox=\box42
-\nofMPsegments=\count270
-\nofMParguments=\count271
-\everyMPshowfont=\toks51
-\MPscratchCnt=\count272
-\MPscratchDim=\dimen175
-\MPnumerator=\count273
-\makeMPintoPDFobject=\count274
-\everyMPtoPDFconversion=\toks52
+\nofMPsegments=\count189
+\nofMParguments=\count190
+\everyMPshowfont=\toks46
+\MPscratchCnt=\count191
+\MPscratchDim=\dimen172
+\MPnumerator=\count192
+\makeMPintoPDFobject=\count193
+\everyMPtoPDFconversion=\toks47
 ) (/usr/share/texlive/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
 Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
 
@@ -1272,13 +1244,14 @@ e
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-\c@mv@tabular=\count275
-\c@mv@boldtabular=\count276
+\c@mv@tabular=\count194
+\c@mv@boldtabular=\count195
 (/usr/share/texlive/texmf-dist/tex/latex/upquote/upquote.sty
 Package: upquote 2012/04/19 v1.3 upright-quote and grave-accent glyphs in verba
 tim
 )
 Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: subfig package v1.3 is loaded.
 Package caption Info: float package is loaded.
 Package caption Info: longtable package is loaded.
 
@@ -1295,46 +1268,79 @@ Package caption Info: End \AtBeginDocument code.
 
 
 Class acmart Warning: Do not put several authors in the same \author macro! on 
-input line 126.
+input line 123.
 
-Class acmart Info: Printing folios on input line 153.
+Class acmart Info: Printing folios on input line 150.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 20.74pt on input line 154.
+(Font)              scaled to size 20.74pt on input line 151.
 LaTeX Font Info:    Try loading font information for T1+LinuxBiolinumT-TLF on i
-nput line 154.
+nput line 151.
 (/usr/share/texlive/texmf-dist/tex/latex/libertine/T1LinuxBiolinumT-TLF.fd
 File: T1LinuxBiolinumT-TLF.fd 2017/03/20 (autoinst) Font definitions for T1/Lin
 uxBiolinumT-TLF.
 )
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 20.74pt on input line 154.
+(Font)              scaled to size 20.74pt on input line 151.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `LinuxBiolinumT-TLF' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/b/n' will be
-(Font)              scaled to size 20.74pt on input line 154.
+(Font)              scaled to size 20.74pt on input line 151.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 154.
+surrounding objects on input line 151.
 
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 154.
+surrounding objects on input line 151.
 
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 14.4pt on input line 154.
+(Font)              scaled to size 14.4pt on input line 151.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 10.95pt on input line 154.
+(Font)              scaled to size 10.95pt on input line 151.
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 151.
+
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
+(Font)              scaled to size 8.0pt on input line 151.
+LaTeX Font Info:    Try loading font information for TS1+LinuxLibertineT-TLF on
+ input line 151.
+(/usr/share/texlive/texmf-dist/tex/latex/libertine/TS1LinuxLibertineT-TLF.fd
+File: TS1LinuxLibertineT-TLF.fd 2017/03/20 (autoinst) Font definitions for TS1/
+LinuxLibertineT-TLF.
+)
+LaTeX Font Info:    Font shape `TS1/LinuxLibertineT-TLF/m/n' will be
+(Font)              scaled to size 8.0pt on input line 151.
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `LinuxLibertineT-TLF' (encoding: TS1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
+(Font)              scaled to size 10.0pt on input line 151.
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
+(Font)              scaled to size 12.0pt on input line 151.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 151.
+
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
+(Font)              scaled to size 9.0pt on input line 151.
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
+(Font)              scaled to size 9.0pt on input line 151.
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
+(Font)              scaled to size 9.0pt on input line 151.
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 10.95pt on input line 154.
+(Font)              scaled to size 9.0pt on input line 151.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `LinuxLibertineT-TLF' (encoding: OT1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 6.1pt on input line 154.
+(Font)              scaled to size 7.3pt on input line 151.
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
@@ -1343,154 +1349,429 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 154.
+surrounding objects on input line 151.
 
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
-(Font)              scaled to size 8.0pt on input line 154.
-LaTeX Font Info:    Try loading font information for TS1+LinuxLibertineT-TLF on
- input line 154.
-(/usr/share/texlive/texmf-dist/tex/latex/libertine/TS1LinuxLibertineT-TLF.fd
-File: TS1LinuxLibertineT-TLF.fd 2017/03/20 (autoinst) Font definitions for TS1/
-LinuxLibertineT-TLF.
-)
-LaTeX Font Info:    Font shape `TS1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 8.0pt on input line 154.
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `LinuxLibertineT-TLF' (encoding: TS1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
-(Font)              scaled to size 10.0pt on input line 154.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
-(Font)              scaled to size 12.0pt on input line 154.
+(Font)              scaled to size 10.0pt on input line 157.
 
-
-Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 154.
-
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 9.0pt on input line 154.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
-(Font)              scaled to size 9.0pt on input line 154.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
-(Font)              scaled to size 9.0pt on input line 154.
-LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 9.0pt on input line 154.
-LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 7.3pt on input line 154.
-
-Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 154.
-
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
-(Font)              scaled to size 10.0pt on input line 160.
-
-Overfull \hbox (2.10287pt too wide) in paragraph at lines 160--161
+Overfull \hbox (2.10287pt too wide) in paragraph at lines 157--158
 []\T1/LinuxLibertineT-TLF/m/n/10 (-20) While it is im-por-tant to keep the queu
 -ing de-lay con-strained,
  []
 
 
-Underfull \vbox (badness 2197) has occurred while \output is active []
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 174.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 174.
+
+<figures/traq_illustration_too_little.pdf, id=58, 71.53224pt x 37.09961pt>
+File: figures/traq_illustration_too_little.pdf Graphic file (type pdf)
+<use figures/traq_illustration_too_little.pdf>
+Package pdftex.def Info: figures/traq_illustration_too_little.pdf  used on inpu
+t line 175.
+(pdftex.def)             Requested size: 241.14749pt x 125.07042pt.
+
+Class acmart Warning: A possible image without description on input line 178.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 180.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 180.
+
+<figures/traq_illustration_too_much.pdf, id=59, 72.17062pt x 51.32574pt>
+File: figures/traq_illustration_too_much.pdf Graphic file (type pdf)
+<use figures/traq_illustration_too_much.pdf>
+Package pdftex.def Info: figures/traq_illustration_too_much.pdf  used on input 
+line 181.
+(pdftex.def)             Requested size: 241.14749pt x 171.53072pt.
+
+Underfull \hbox (badness 1005) in paragraph at lines 182--182
+\T1/LinuxLibertineT-TLF/b/n/10 longer RTTs which can im-pair ap-pli-ca-tion per
+-for-
+ []
+
+
+Class acmart Warning: A possible image without description on input line 184.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
 
 ]
-Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 179.
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 201.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 201.
+
+<figures/traq_intervals.pdf, id=89, 101.32555pt x 60.19388pt>
+File: figures/traq_intervals.pdf Graphic file (type pdf)
+<use figures/traq_intervals.pdf>
+Package pdftex.def Info: figures/traq_intervals.pdf  used on input line 202.
+(pdftex.def)             Requested size: 241.14749pt x 143.2751pt.
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 10.0pt on input line 179.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 7.3pt on input line 179.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 5.5pt on input line 179.
+(Font)              scaled to size 10.0pt on input line 203.
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/it' will be
+(Font)              scaled to size 10.0pt on input line 203.
+
+Class acmart Warning: A possible image without description on input line 205.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
+put line 210.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/sc' will be
-(Font)              scaled to size 10.0pt on input line 183.
+(Font)              scaled to size 10.0pt on input line 214.
 
-
-Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 201.
-
-
-Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 201.
-
-LaTeX Font Info:    Try loading font information for T1+zi4 on input line 204.
-(/usr/share/texlive/texmf-dist/tex/latex/inconsolata/t1zi4.fd
-File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
-)
-LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 10.0pt on input line 204.
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `zi4' (encoding: T1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-Package microtype Info: Character `textendash ' is missing
-(microtype)             in font `T1/zi4/m/n/10'.
-(microtype)             Ignoring protrusion settings for this character.
-Package microtype Info: Character `textemdash ' is missing
-(microtype)             in font `T1/zi4/m/n/10'.
-(microtype)             Ignoring protrusion settings for this character.
-
-Overfull \hbox (13.24455pt too wide) in paragraph at lines 204--205
-\T1/LinuxLibertineT-TLF/m/n/10 (-20) We thank Ger-not Vor-mayr for pro-vid-ing 
-us with the \T1/zi4/m/n/10 py-virtnet
+Underfull \hbox (badness 10000) in paragraph at lines 217--218
+[] \T1/LinuxLibertineT-TLF/m/n/10 (+20) buffer_size $\LMS/ntxsy/m/n/10  $ \T1/L
+inuxLibertineT-TLF/m/n/10 (+20) buffer_size + (pack-
  []
 
-(./paper.bbl
-LaTeX Info: Redefining \tempurl on input line 67.
-LaTeX Info: Redefining \tempurl on input line 84.
-LaTeX Info: Redefining \tempurl on input line 99.
-LaTeX Info: Redefining \tempurl on input line 115.
-LaTeX Info: Redefining \tempurl on input line 133.
-LaTeX Info: Redefining \tempurl on input line 148.
-LaTeX Info: Redefining \tempurl on input line 166.
-)
 
-Package balance Warning: You have called \balance in second column
-(balance)                Columns might not be balanced.
+Underfull \hbox (badness 10000) in paragraph at lines 217--218
+\T1/LinuxLibertineT-TLF/m/n/10 (+20) ets_transmitted_in_current_interval / time
+_active
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 225--226
+[] \T1/LinuxLibertineT-TLF/m/n/10 (+20) buffer_size $\LMS/ntxsy/m/n/10  $ \T1/L
+inuxLibertineT-TLF/m/n/10 (+20) buffer_size - stand-
+ []
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 239.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 239.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 10.0pt on input line 209.
-[2.2]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 209.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 209.
+(Font)              scaled to size 10.0pt on input line 245.
+ [2.2 <./figures/traq_illustration_too_little.pdf> <./figures/traq_illustration
+_too_much.pdf>] [3.3 <./figures/traq_intervals.pdf>]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\gls' on input line 250.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 262.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 262.
+
+<../plots/throughput_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap.pdf, id=134,
+ 329.7655pt x 127.79831pt>
+File: ../plots/throughput_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap.pdf Gra
+phic file (type pdf)
+<use ../plots/throughput_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap.pdf>
+Package pdftex.def Info: ../plots/throughput_1_fq_cubic_10_20_60_0.5_bw_1571240
+937211.pcap.pdf  used on input line 264.
+(pdftex.def)             Requested size: 241.14749pt x 93.45773pt.
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
+(Font)              scaled to size 8.0pt on input line 264.
+<../plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap.pdf, id=135, 339.34
+78pt x 122.03969pt>
+File: ../plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap.pdf Graphic fi
+le (type pdf)
+<use ../plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap.pdf>
+Package pdftex.def Info: ../plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.
+pcap.pdf  used on input line 266.
+(pdftex.def)             Requested size: 241.14749pt x 86.72327pt.
+
+Class acmart Warning: A possible image without description on input line 269.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 271.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 271.
+
+<../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap.pdf, id=140,
+ 329.94391pt x 127.80902pt>
+File: ../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap.pdf Gra
+phic file (type pdf)
+<use ../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap.pdf>
+Package pdftex.def Info: ../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241
+047054.pcap.pdf  used on input line 273.
+(pdftex.def)             Requested size: 241.14749pt x 93.4129pt.
+<../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap.pdf, id=141, 339.34
+78pt x 122.03969pt>
+File: ../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap.pdf Graphic fi
+le (type pdf)
+<use ../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap.pdf>
+Package pdftex.def Info: ../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.
+pcap.pdf  used on input line 275.
+(pdftex.def)             Requested size: 241.14749pt x 86.72327pt.
+
+Class acmart Warning: A possible image without description on input line 278.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 280.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 280.
+
+<../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap.pdf, id=146,
+ 339.42937pt x 127.81401pt>
+File: ../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap.pdf Gra
+phic file (type pdf)
+<use ../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap.pdf>
+Package pdftex.def Info: ../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241
+151290.pcap.pdf  used on input line 282.
+(pdftex.def)             Requested size: 241.14749pt x 90.80708pt.
+<../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap.pdf, id=147, 339.34
+78pt x 122.03969pt>
+File: ../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap.pdf Graphic fi
+le (type pdf)
+<use ../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap.pdf>
+Package pdftex.def Info: ../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.
+pcap.pdf  used on input line 284.
+(pdftex.def)             Requested size: 241.14749pt x 86.72327pt.
+
+Class acmart Warning: A possible image without description on input line 287.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 291.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 291.
+
+<../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap.pdf
+, id=156, 339.51514pt x 128.12816pt>
+File: ../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pca
+p.pdf Graphic file (type pdf)
+<use ../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap
+.pdf>
+Package pdftex.def Info: ../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_b
+w_1571244312838.pcap.pdf  used on input line 293.
+(pdftex.def)             Requested size: 241.14749pt x 91.00876pt.
+<../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap.pdf, id=15
+7, 339.23944pt x 122.03969pt>
+File: ../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap.pdf G
+raphic file (type pdf)
+<use ../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap.pdf>
+Package pdftex.def Info: ../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_15712
+44312838.pcap.pdf  used on input line 295.
+(pdftex.def)             Requested size: 241.14749pt x 86.75119pt.
+
+Class acmart Warning: A possible image without description on input line 298.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 300.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 300.
+
+<../plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap.pdf, id=1
+62, 339.51514pt x 128.15347pt>
+File: ../plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap.pdf 
+Graphic file (type pdf)
+<use ../plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap.pdf>
+Package pdftex.def Info: ../plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571
+244036720.pcap.pdf  used on input line 302.
+(pdftex.def)             Requested size: 241.14749pt x 91.02675pt.
+<../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap.pdf, id=163, 339
+.32898pt x 122.03969pt>
+File: ../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap.pdf Graphic
+ file (type pdf)
+<use ../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap.pdf>
+Package pdftex.def Info: ../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_15712440367
+20.pcap.pdf  used on input line 304.
+(pdftex.def)             Requested size: 241.14749pt x 86.72699pt.
+
+Class acmart Warning: A possible image without description on input line 307.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[4.4 <../plots/throughput_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap.pdf> <.
+./plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap.pdf
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/rtt_1_fq_cubic_10_20_60_0.5_bw
+_1571240937211.pcap.pdf): PDF inclusion: multiple pdfs with page group included
+ in a single page
+>]
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 315.
+
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 315.
+
+<../plots/throughput_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap.pdf, id=206
+, 339.25096pt x 128.15347pt>
+File: ../plots/throughput_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap.pdf Gr
+aphic file (type pdf)
+<use ../plots/throughput_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap.pdf>
+Package pdftex.def Info: ../plots/throughput_1_cn_bbr_10_50_60_0.5_delay_157128
+8916582.pcap.pdf  used on input line 317.
+(pdftex.def)             Requested size: 241.14749pt x 91.09323pt.
+<../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap.pdf, id=207, 339.3
+478pt x 122.03969pt>
+File: ../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap.pdf Graphic f
+ile (type pdf)
+<use ../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap.pdf>
+Package pdftex.def Info: ../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582
+.pcap.pdf  used on input line 319.
+(pdftex.def)             Requested size: 241.14749pt x 86.72327pt.
+
+Class acmart Warning: A possible image without description on input line 322.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+(./paper.bbl
+LaTeX Info: Redefining \tempurl on input line 68.
+LaTeX Info: Redefining \tempurl on input line 85.
+LaTeX Info: Redefining \tempurl on input line 128.
+ [5.5 <../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap.pdf> <
+../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap.pdf
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/rtt_1_cn_cubic_10_20_60_0.5_bw
+_1571241047054.pcap.pdf): PDF inclusion: multiple pdfs with page group included
+ in a single page
+> <../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap.pdf
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/throughput_1_cn_cubic_10_20_60
+_2.0_bw_1571241151290.pcap.pdf): PDF inclusion: multiple pdfs with page group i
+ncluded in a single page
+> <../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap.pdf
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/rtt_1_cn_cubic_10_20_60_2.0_bw
+_1571241151290.pcap.pdf): PDF inclusion: multiple pdfs with page group included
+ in a single page
+>]
+LaTeX Info: Redefining \tempurl on input line 145.
+LaTeX Info: Redefining \tempurl on input line 160.
+LaTeX Info: Redefining \tempurl on input line 176.
+LaTeX Info: Redefining \tempurl on input line 191.
+LaTeX Info: Redefining \tempurl on input line 208.
+LaTeX Info: Redefining \tempurl on input line 223.
+LaTeX Info: Redefining \tempurl on input line 241.
+
+Underfull \hbox (badness 4403) in paragraph at lines 234--244
+[]\T1/LinuxLibertineT-TLF/m/n/8 (+20) D. Taht, Jim Get-tys, T. Hoeiland-Joergen
+sen, Toke Hoeiland-
+ []
+
+)
+
+Class acmart Warning: Some images may lack descriptions.
+
+[6.6 <../plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap.pdf>
+ <../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap.pdf
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/rtt_1_cn_cubic_100_100_240_1.0
+_bw_1571244036720.pcap.pdf): PDF inclusion: multiple pdfs with page group inclu
+ded in a single page
+> <../plots/throughput_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap.pdf
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/throughput_1_cn_bbr_10_50_60_0
+.5_delay_1571288916582.pcap.pdf): PDF inclusion: multiple pdfs with page group 
+included in a single page
+> <../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap.pdf
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/rtt_1_cn_bbr_10_50_60_0.5_dela
+y_1571288916582.pcap.pdf): PDF inclusion: multiple pdfs with page group include
+d in a single page
+> <../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap.p
+df
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/throughput_1_fq_codel_cubic_10
+0_100_240_1.0_bw_1571244312838.pcap.pdf): PDF inclusion: multiple pdfs with pag
+e group included in a single page
+> <../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap.pdf
+
+pdfTeX warning: /usr/bin/pdflatex (file ../plots/rtt_1_fq_codel_cubic_100_100_2
+40_1.0_bw_1571244312838.pcap.pdf): PDF inclusion: multiple pdfs with page group
+ included in a single page
+>]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 338.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 338.
  (./paper.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 209.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 209.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 338.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 338.
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: 628B48B010AF7FAF65C108A94D1662E1;385.
+(rerunfilecheck)             Checksum: E01661BD4C4FC26F0E81CD9741E4E35B;1268.
  ) 
 Here is how much of TeX's memory you used:
- 23105 strings out of 492615
- 350757 string characters out of 6131391
- 529853 words of memory out of 5000000
- 26124 multiletter control sequences out of 15000+600000
- 161932 words of font info for 282 fonts, out of 8000000 for 9000
+ 23106 strings out of 492615
+ 355385 string characters out of 6131391
+ 538488 words of memory out of 5000000
+ 26037 multiletter control sequences out of 15000+600000
+ 154465 words of font info for 293 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 60i,11n,94p,1986b,503s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texlive/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc}{/usr/
-share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_oexx6f.enc}{/usr/share/
-texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp.enc}{/usr/share/texliv
-e/texmf-dist/fonts/enc/dvips/base/8r.enc}{/usr/share/texlive/texmf-dist/fonts/e
-nc/dvips/libertine/lbtn_25tcsq.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvi
-ps/libertine/lbtn_naooyc.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/lib
-ertine/lbtn_7grukw.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine
-/lbtn_nh77jq.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_
-76gpa5.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/inconsolata/Incons
-olata-zi4r.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinB
-iolinumT.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinBio
-linumTB.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinLibe
-rtineT.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinLiber
-tineTB.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinLiber
-tineTI.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/txfonts/rtxmi.pfb>
-</usr/share/texlive/texmf-dist/fonts/type1/public/txfonts/rtxr.pfb></usr/share/
-texlive/texmf-dist/fonts/type1/public/newtx/txsys.pfb></usr/share/texlive/texmf
--dist/fonts/type1/public/newtx/zxlri.pfb>
-Output written on paper.pdf (2 pages, 417819 bytes).
+ 60i,11n,94p,3085b,631s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp.enc}{/us
+r/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_ki75ao.enc}{/usr/shar
+e/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}{/usr/share/texlive/texmf-dist
+/fonts/enc/dvips/libertine/lbtn_oexx6f.enc}{/usr/share/texlive/texmf-dist/fonts
+/enc/dvips/libertine/lbtn_25tcsq.enc}{/usr/share/texlive/texmf-dist/fonts/enc/d
+vips/libertine/lbtn_naooyc.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/l
+ibertine/lbtn_7grukw.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/liberti
+ne/lbtn_nh77jq.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbt
+n_76gpa5.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinBio
+linumT.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinBioli
+numTB.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinLibert
+ineT.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinLiberti
+neTB.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinLiberti
+neTBI.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/libertine/LinLibert
+ineTI.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pf
+b></usr/share/texlive/texmf-dist/fonts/type1/public/txfonts/rtxmi.pfb></usr/sha
+re/texlive/texmf-dist/fonts/type1/public/newtx/txsys.pfb></usr/share/texlive/te
+xmf-dist/fonts/type1/public/newtx/zxlri.pfb>
+Output written on paper.pdf (6 pages, 3380591 bytes).
 PDF statistics:
- 147 PDF objects out of 1000 (max. 8388607)
- 115 compressed objects within 2 object streams
- 21 named destinations out of 1000 (max. 500000)
- 54829 words of extra memory for PDF output out of 61914 (max. 10000000)
+ 421 PDF objects out of 1000 (max. 8388607)
+ 321 compressed objects within 4 object streams
+ 59 named destinations out of 1000 (max. 500000)
+ 49832 words of extra memory for PDF output out of 51595 (max. 10000000)
 

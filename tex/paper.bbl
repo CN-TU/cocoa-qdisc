@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{8}
+\begin{thebibliography}{13}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -37,6 +37,38 @@
 \providecommand\natexlab[1]{#1}
 \providecommand\showeprint[2][]{arXiv:#2}
 
+\bibitem[\protect\citeauthoryear{Borman, Scheffenegger, and Jacobson}{Borman
+  et~al\mbox{.}}{2014}]%
+        {borman_tcp_2014}
+\bibfield{author}{\bibinfo{person}{David Borman}, \bibinfo{person}{Richard
+  Scheffenegger}, {and} \bibinfo{person}{Van Jacobson}.}
+  \bibinfo{year}{2014}\natexlab{}.
+\newblock \bibinfo{title}{{TCP} {Extensions} for {High} {Performance}}.
+\newblock
+\newblock
+\urldef\tempurl%
+\url{https://tools.ietf.org/html/rfc7323}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Brakmo and Peterson}{Brakmo and
+  Peterson}{1995}]%
+        {brakmo_tcp_1995}
+\bibfield{author}{\bibinfo{person}{L.S. Brakmo} {and} \bibinfo{person}{L.L.
+  Peterson}.} \bibinfo{year}{1995}\natexlab{}.
+\newblock \showarticletitle{{TCP} {Vegas}: end to end congestion avoidance on a
+  global {Internet}}.
+\newblock \bibinfo{journal}{\emph{IEEE Journal on Selected Areas in
+  Communications}} \bibinfo{volume}{13}, \bibinfo{number}{8}
+  (\bibinfo{date}{Oct.} \bibinfo{year}{1995}), \bibinfo{pages}{1465--1480}.
+\newblock
+\showISSN{0733-8716, 1558-0008}
+\urldef\tempurl%
+\url{https://doi.org/10.1109/49.464716}
+\showDOI{\tempurl}
+
+
 \bibitem[\protect\citeauthoryear{Cardwell, Cheng, Gunn, Yeganeh, and
   Jacobson}{Cardwell et~al\mbox{.}}{2016}]%
         {cardwell_bbr:_2016}
@@ -53,6 +85,35 @@
 \url{http://queue.acm.org/detail.cfm?id=3022184}
 \showURL{%
 \tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Cardwell, Cheng, Yeganeh, Jha, Seung, Swett,
+  Vasiliev, Wu, Mathis, and Jacobson}{Cardwell et~al\mbox{.}}{2019a}]%
+        {cardwell_bbr_2019}
+\bibfield{author}{\bibinfo{person}{Neal Cardwell}, \bibinfo{person}{Yuchung
+  Cheng}, \bibinfo{person}{Soheil~Hassas Yeganeh}, \bibinfo{person}{Priyaranjan
+  Jha}, \bibinfo{person}{Yousuk Seung}, \bibinfo{person}{Ian Swett},
+  \bibinfo{person}{Victor Vasiliev}, \bibinfo{person}{Bin Wu},
+  \bibinfo{person}{Matt Mathis}, {and} \bibinfo{person}{Van Jacobson}.}
+  \bibinfo{year}{2019}\natexlab{a}.
+\newblock \showarticletitle{{BBR} v2: {A} {Model}-based {Congestion} {Control}
+  {IETF} 105 {Update}}.
+\newblock  (\bibinfo{year}{2019}), \bibinfo{pages}{21}.
+\newblock
+
+
+\bibitem[\protect\citeauthoryear{Cardwell, Cheng, Yeganeh, Swett, Vasiliev,
+  Jha, Seung, Mathis, and Jacobson}{Cardwell et~al\mbox{.}}{2019b}]%
+        {cardwell_bbr_2019-1}
+\bibfield{author}{\bibinfo{person}{Neal Cardwell}, \bibinfo{person}{Yuchung
+  Cheng}, \bibinfo{person}{Soheil~Hassas Yeganeh}, \bibinfo{person}{Ian Swett},
+  \bibinfo{person}{Victor Vasiliev}, \bibinfo{person}{Priyaranjan Jha},
+  \bibinfo{person}{Yousuk Seung}, \bibinfo{person}{Matt Mathis}, {and}
+  \bibinfo{person}{Van Jacobson}.} \bibinfo{year}{2019}\natexlab{b}.
+\newblock \showarticletitle{{BBR} v2 {A} {Model}-based {Congestion} {Control}
+  {IETF} 104}.
+\newblock  (\bibinfo{year}{2019}), \bibinfo{pages}{36}.
+\newblock
 
 
 \bibitem[\protect\citeauthoryear{Dumazet}{Dumazet}{2013}]%
@@ -116,6 +177,20 @@
 \showDOI{\tempurl}
 \newblock
 \shownote{event-place: Stanford, California, USA.}
+
+
+\bibitem[\protect\citeauthoryear{Kühlewind and Trammell}{Kühlewind and
+  Trammell}{2018}]%
+        {kuhlewind_quic_2018}
+\bibfield{author}{\bibinfo{person}{Mirja Kühlewind} {and}
+  \bibinfo{person}{Brian Trammell}.} \bibinfo{year}{2018}\natexlab{}.
+\newblock \bibinfo{title}{The {QUIC} {Latency} {Spin} {Bit}}.
+\newblock
+\newblock
+\urldef\tempurl%
+\url{https://tools.ietf.org/html/draft-ietf-quic-spin-exp-01}
+\showURL{%
+\tempurl}
 
 
 \bibitem[\protect\citeauthoryear{Nichols and Jacobson}{Nichols and
