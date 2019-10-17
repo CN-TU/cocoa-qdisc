@@ -257,7 +257,7 @@ We implement our \gls{qdisc} as an extension of the ``fq'' \gls{qdisc} \cite{dum
 
 \section{Evaluation}
 
-We evaluate our \gls{qdisc} using the \ifx\removeHeaders\tempYes{}\texttt{py-virtnet}\else{}[removed for anonymity]\fi{} toolkit to build a virtual network using Linux's network namespaces. We initialize the buffer size for our \gls{qdisc} to 100 packets per flow like in fq. 
+We evaluate our \gls{qdisc} using the \texttt{py-virtnet} (\url{https://github.com/CN-TU/py-virtnet}) toolkit to build a virtual network using Linux's network namespaces. We initialize the buffer size for our \gls{qdisc} to 100 packets per flow like in fq. 
 
 \begin{figure}[h]
 \subfloat[Throughput of the fq \gls{qdisc}\label{fig:fqThroughput}
