@@ -167,7 +167,7 @@ As a remedy, we conceive an \gls{aqm} mechanism that explicitly measures the beh
 \item link utilization is optimized and
 \item queuing delay is kept at the minimum that is required to achieve optimum throughput considering the \gls{cc}.
 \end{enumerate}
-Finally, we develop a prototype of our \gls{qdisc} and show that it can achieve these objectives for the most common loss-based \glspl{cca}, Reno \cite {jacobson_congestion_1988} and Cubic \cite{ha_cubic:_2008}. These \glspl{cca} work by continuously increasing the number of bytes that are allowed to be in the network (congestion window) if no packet loss is experienced and by sharply decreasing this number if a packet is lost (multiplicative decrease). With Cubic being the default \gls{cc} in all major OS \todo{citation maybe needed}, we especially emphasize our evaluation on improving its performance. Contrasting to the aforementioned \glspl{cca}, recently proposed BBR \cite{cardwell_bbr:_2016} does not continuously increase and then sharply decrease when packets are lost but instead uses periodic measurements to estimate the available bandwidth as well as the minimal \gls{rtt} and then tries to stay at this point of optimal bandwidth and minimal delay. BBR is thus considered to be \textit{model-based}. We demonstrate that our \gls{qdisc} also behaves well in interaction with BBR~v1.
+Finally, we develop a prototype of our \gls{qdisc} and show that it can achieve these objectives for the most common loss-based \glspl{cca}, Reno \cite {jacobson_congestion_1988} and Cubic \cite{ha_cubic:_2008}. These \glspl{cca} work by continuously increasing the number of bytes that are allowed to be in the network (congestion window) if no packet loss is experienced and by sharply decreasing this number if a packet is lost (multiplicative decrease). With Cubic being the default \gls{cc} in all major OS, we especially emphasize our evaluation on improving its performance. Contrasting to the aforementioned \glspl{cca}, recently proposed BBR \cite{cardwell_bbr:_2016} does not continuously increase and then sharply decrease when packets are lost but instead uses periodic measurements to estimate the available bandwidth as well as the minimal \gls{rtt} and then tries to stay at this point of optimal bandwidth and minimal delay. BBR is thus considered to be \textit{model-based}. We demonstrate that our \gls{qdisc} also behaves well in interaction with BBR~v1.
 
 \section{Concept}
 
@@ -273,7 +273,7 @@ We evaluate our \gls{qdisc} using the \ifx\removeHeaders\tempYes{}\texttt{py-vir
 ]{\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}}{}
 \subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelay}
 ]{\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}}{}
-\caption{Throughput (\ref{fig:cnThroughput}) and delay (\ref{fig:cnDelay}) of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. Our \gls{qdisc} manages to keep the queuing delay minimal while achieving the same throughput as with an oversized buffer.}
+\caption{Throughput (\ref{fig:cnThroughput}) and delay (\ref{fig:cnDelay}) of a Cubic flow that is managed by our \gls{qdisc} at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. Our \gls{qdisc} manages to keep the queuing delay minimal while achieving the same throughput as with an oversized buffer.}
 \label{fig:cn}
 \end{figure}
 
@@ -282,16 +282,16 @@ We evaluate our \gls{qdisc} using the \ifx\removeHeaders\tempYes{}\texttt{py-vir
 ]{\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}}{}
 \subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelay2}
 ]{\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}}{}
-\caption{Throughput (\ref{fig:cnThroughput2}) and delay (\ref{fig:cnDelay2}) of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is doubled after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by our \gls{qdisc}.}
+\caption{Throughput (\ref{fig:cnThroughput2}) and delay (\ref{fig:cnDelay2}) of a Cubic flow that is managed by our \gls{qdisc} at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is doubled after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by our \gls{qdisc}.}
 \label{fig:cn2}
 \end{figure}
 
 First we evaluate if our \gls{qdisc} is able to maintain a small buffer like it is necessary in case of small \glspl{bdp}. As can be seen in \autoref{fig:fq} the regular fq qdisc maintains a standing queue and unnecessarily leads to a significant increase in \gls{rtt} (100\,ms minimum, when the real minimum is 10\,ms). In contrast, \autoref{fig:cn} maintains the full throughput while at the same time keeping the delay minimal and not keeping a standing queue. Also, when drastically changing the bandwidth by halving it (\autoref{fig:cn}) or doubling it (\autoref{fig:cn2}) our \gls{qdisc} rapidly adapts to the new conditions and returns to the optimum state. 
 
 \begin{figure}[h]
-\subfloat[Throughput of our \gls{qdisc}\label{fig:fqCodelThroughputLong}
+\subfloat[Throughput of the fq\_codel \gls{qdisc}\label{fig:fqCodelThroughputLong}
 ]{\includegraphics[width=\columnwidth]{{{../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}}{}
-\subfloat[Delay of our \gls{qdisc}.\label{fig:fqCodelDelayLong}
+\subfloat[Delay of the fq\_codel \gls{qdisc}.\label{fig:fqCodelDelayLong}
 ]{\includegraphics[width=\columnwidth]{{{../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}}{}
 \caption{Throughput (\ref{fig:fqCodelThroughputLong}) and delay (\ref{fig:fqCodelDelayLong}) of a Cubic flow that is managed by fq\_codel at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 101.36\,ms. Total throughput is 2615\,MB.}
 \label{fig:fqCodel}
