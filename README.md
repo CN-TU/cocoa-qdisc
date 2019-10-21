@@ -1,4 +1,4 @@
-# traq
+# cocoa-qdisc
 CN contact: Maximilian Bachl
 
 To compile the kernel module run 
