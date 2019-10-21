@@ -253,7 +253,7 @@ One more challenge is posed by the following consideration: If a delay-based \gl
 
 \section{Implementation}
 
-We implement our \gls{qdisc} as an extension of the ``fq'' \gls{qdisc} \cite{dumazet_pkt_sched:_2013}. This means that when using our \gls{qdisc} also all features offered by fq are available. We add three configuration parameters to the \gls{qdisc}: the multiplier (default 1.25), the maximum buffer increase (default 2.0) and the maximum \gls{gi} duration (default 1.0\,s). We make the source code of our implementation freely available to enable reproducibility and encourage experimentation: \url{https://github.com/CN-TU/traq}.
+We implement our \gls{qdisc} as an extension of the ``fq'' \gls{qdisc} \cite{dumazet_pkt_sched:_2013}. This means that when using our \gls{qdisc} also all features offered by fq are available. We add three configuration parameters to the \gls{qdisc}: the multiplier (default 1.25), the maximum buffer increase (default 2.0) and the maximum \gls{gi} duration (default 1.0\,s). We make the source code of our implementation freely available to enable reproducibility and encourage experimentation: \url{https://github.com/CN-TU/cocoa-qdisc}.
 
 \section{Evaluation}
 
@@ -273,55 +273,75 @@ We evaluate our \gls{qdisc} using the \texttt{py-virtnet} (\url{https://github.c
 \end{figure}
 
 \begin{figure}[h]
-\subfloat[Throughput of our \gls{qdisc}\label{fig:cnThroughput}
-]{\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}}{}
-\subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelay}
-]{\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}}{}
-\caption{Throughput (\ref{fig:cnThroughput}) and delay (\ref{fig:cnDelay}) of a Cubic flow that is managed by our \gls{qdisc} at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. Our \gls{qdisc} manages to keep the queuing delay minimal while achieving the same throughput as with an oversized buffer.}
+%\subfloat[Throughput of our \gls{qdisc}\label{fig:cnThroughput}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}
+%}{}
+%\subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelay}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}
+%}{}
+\caption{Throughput and delay of a Cubic flow that is managed by our \gls{qdisc} at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. Our \gls{qdisc} manages to keep the queuing delay minimal while achieving the same throughput as with an oversized buffer.}
 \label{fig:cn}
 \end{figure}
 
 \begin{figure}[h]
-\subfloat[Throughput of our \gls{qdisc}\label{fig:cnThroughput2}
-]{\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}}{}
-\subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelay2}
-]{\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}}{}
-\caption{Throughput (\ref{fig:cnThroughput2}) and delay (\ref{fig:cnDelay2}) of a Cubic flow that is managed by our \gls{qdisc} at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is doubled after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by our \gls{qdisc}.}
+%\subfloat[Throughput of our \gls{qdisc}\label{fig:cnThroughput2}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}
+%}{}
+%\subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelay2}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}
+%}{}
+\caption{Throughput and delay of a Cubic flow that is managed by our \gls{qdisc} at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is doubled after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by our \gls{qdisc}.}
 \label{fig:cn2}
 \end{figure}
 
 First we evaluate if our \gls{qdisc} is able to maintain a small buffer like it is necessary in case of small \glspl{bdp}. As can be seen in \autoref{fig:fq} the regular fq qdisc maintains a standing queue and unnecessarily leads to a significant increase in \gls{rtt} (100\,ms minimum, when the real minimum is 10\,ms). In contrast, \autoref{fig:cn} maintains the full throughput while at the same time keeping the delay minimal and not keeping a standing queue. Also, when drastically changing the bandwidth by halving it (\autoref{fig:cn}) or doubling it (\autoref{fig:cn2}) our \gls{qdisc} rapidly adapts to the new conditions and returns to the optimum state. 
 
 \begin{figure}[h]
-\subfloat[Throughput of the fq\_codel \gls{qdisc}\label{fig:fqCodelThroughputLong}
-]{\includegraphics[width=\columnwidth]{{{../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}}{}
-\subfloat[Delay of the fq\_codel \gls{qdisc}.\label{fig:fqCodelDelayLong}
-]{\includegraphics[width=\columnwidth]{{{../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}}{}
-\caption{Throughput (\ref{fig:fqCodelThroughputLong}) and delay (\ref{fig:fqCodelDelayLong}) of a Cubic flow that is managed by fq\_codel at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 101.61\,ms. Total throughput is 2615\,MB.}
+%\subfloat[Throughput of the fq\_codel \gls{qdisc}\label{fig:fqCodelThroughputLong}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}
+%}{}
+%\subfloat[Delay of the fq\_codel \gls{qdisc}.\label{fig:fqCodelDelayLong}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}
+%}{}
+\caption{Throughput and delay of a Cubic flow that is managed by fq\_codel at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 101.61\,ms. Total throughput is 2615\,MB.}
 \label{fig:fqCodel}
 \end{figure}
 
 \begin{figure}[h]
-\subfloat[Throughput of our \gls{qdisc}\label{fig:cnThroughputLong}
-]{\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}}{}
-\subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelayLong}
-]{\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}}{}
-\caption{Throughput (\ref{fig:cnThroughputLong}) and delay (\ref{fig:cnDelayLong}) of a Cubic flow that is managed by our \gls{qdisc} at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 130.36\,ms. Total throughput is 2893\,MB.}
+%\subfloat[Throughput of our \gls{qdisc}\label{fig:cnThroughputLong}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}
+%}{}
+%\subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelayLong}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}
+%}{}
+\caption{Throughput and delay of a Cubic flow that is managed by our \gls{qdisc} at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 130.36\,ms. Total throughput is 2893\,MB.}
 \label{fig:cnLong}
 \end{figure}
 
-Next we compare our \gls{qdisc} against fq\_codel. Figure\autoref{fig:fqCodelDelayLong} shows that fq\_codel keeps the queuing delay under 5\,ms. Figure\autoref{fig:fqCodelThroughputLong} shows that keeping the queuing delay that low is detrimental for achieving full throughput when using the Cubic \gls{cca}. With our \gls{qdisc} we achieve throughput that is more than 10\% higher overall, while only slightly increasing the average delay. In addition to Cubic, we performed experiments with Reno. Here, over a 240\,s flow of 100\,Mbit/s with a delay of 50\,ms, our \gls{qdisc} achieves more than 20\% higher throughput than fq\_codel. The average \gls{rtt} for fq\_codel is 51.34\,ms while it is 96.78\,ms for our \gls{qdisc}.
+Next we compare our \gls{qdisc} against fq\_codel. \autoref{fig:fqCodel} shows that fq\_codel keeps the queuing delay under 5\,ms. Also it shows that keeping the queuing delay that low is detrimental for achieving full throughput when using the Cubic \gls{cca}. With our \gls{qdisc} we achieve throughput that is more than 10\% higher overall, while only slightly increasing the average delay. In addition to Cubic, we performed experiments with Reno. Here, over a 240\,s flow of 100\,Mbit/s with a delay of 50\,ms, our \gls{qdisc} achieves more than 20\% higher throughput than fq\_codel. The average \gls{rtt} for fq\_codel is 51.34\,ms while it is 96.78\,ms for our \gls{qdisc}.
 
 Besides fq\_codel possibly leading to lower throughput as we have shown, another problem is that for links with a small \gls{bdp} fq\_codel can keep a standing queue akin to fq since fq\_codel only wants queuing delay to fall below 5\,ms once every 100\,ms. For example, on a link with a base \gls{rtt} of 5\,ms, fq\_codel would accept a permanent standing queue of 4.9\,ms, leading to overall \gls{rtt} being doubled, which is not required for achieving optimal throughput. 
 
 We also ran experiments with the cake \gls{qdisc}. However, results were very similar to those of fq\_codel, which is no surprise since cake is based upon fq\_codel.
 
 \begin{figure}[h]
-\subfloat[Throughput of our \gls{qdisc}\label{fig:cnThroughputBBR}
-]{\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}}{}
-\subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelayBBR}
-]{\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}}{}
-\caption{Throughput (\ref{fig:cnThroughputBBR}) and delay (\ref{fig:cnDelayBBR}) of a BBR~v1 flow that is managed by our \gls{qdisc} at the bottleneck. The bandwidth is 50\,Mbit/s. The delay is 10\,ms and it is cut by half after 30\,s.}
+%\subfloat[Throughput of our \gls{qdisc}\label{fig:cnThroughputBBR}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}
+%}{}
+%\subfloat[Delay of our \gls{qdisc}.\label{fig:cnDelayBBR}
+%]{
+\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}
+%}{}
+\caption{Throughput and delay of a BBR~v1 flow that is managed by our \gls{qdisc} at the bottleneck. The bandwidth is 50\,Mbit/s. The delay is 10\,ms and it is cut by half after 30\,s.}
 \label{fig:cnBBR}
 \end{figure}
 
