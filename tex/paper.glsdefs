@@ -268,3 +268,33 @@ parent={},%
 %
 }%
 }%
+\ifglsentryexists{cocoa}{}%
+{%
+\gls@defglossaryentry{cocoa}%
+{%
+name={cocoa},%
+sort={cocoa},%
+type={acronym},%
+first={Congestion Control Aware\glsspace (cocoa)},%
+firstplural={Congestion Control Awares\glsspace (cocoas)},%
+text={cocoa},%
+plural={cocoas},%
+description={Congestion Control Aware},%
+descriptionplural={Congestion Control Aware\acrpluralsuffix },%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Congestion Control Aware},%
+longplural={Congestion Control Awares},%
+short={cocoa},%
+shortplural={cocoas},%
+counter={page},%
+parent={},%
+%
+}%
+}%
