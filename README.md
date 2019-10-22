@@ -17,7 +17,7 @@ Next, change into the iproute2 folder ```cd iproute2``` and run
 ## Deploying
 To make the configuration for the module visible to the ```tc``` utility we have to set
 
-    export TC_LIB_DIR=<path to the repository>/traq/iproute2/tc
+    export TC_LIB_DIR=<path to the repository>/cocoa-qdisc/iproute2/tc
 
 Finally, you can use the qdisc on an interface: 
 
