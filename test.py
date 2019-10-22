@@ -39,7 +39,7 @@ parser.add_argument('--rate', type=int, default=20)
 parser.add_argument('--mtu', type=int, default=1514)
 parser.add_argument('--time', type=int, default=60)
 parser.add_argument('--change', type=float, default=0.5)
-parser.add_argument('--qdisc', type=str, default="cn")
+parser.add_argument('--qdisc', type=str, default="cocoa")
 parser.add_argument('--cc', type=str, default="cubic")
 parser.add_argument('--thing_to_change', type=str, default="bw")
 
@@ -55,7 +55,7 @@ print("BDP_packets", BDP_packets)
 # BDP_packets = 501
 # BDP_packets = 1
 
-# if opt.qdisc=="cn":
+# if opt.qdisc=="cocoa":
 # 	print("actual packets", BDP_packets)
 
 def run_commands(cmds, Popen=False):
@@ -84,7 +84,7 @@ def run_commands(cmds, Popen=False):
 env_with_tc = os.environ.copy()
 # Idiotic
 # env_with_tc["TC_LIB_DIR"] = os.path.expanduser('~/repos/iproute2/tc')
-if opt.qdisc=="cn":
+if opt.qdisc=="cocoa":
 	env_with_tc["TC_LIB_DIR"] = "/home/max/repos/cocoa-qdisc/iproute2/tc"
 
 # print("os.environ", os.environ)
@@ -134,7 +134,7 @@ def run(vnet):
 			execute_popen_and_show_result(f"ethtool -K {interface} gso off")
 			execute_popen_and_show_result(f"ethtool -K {interface} tso off")
 
-			run_commands([f"tc qdisc add dev {interface} root handle 1: netem{f' delay {int(opt.delay_to_add)}ms' if interface=='host00' else ''}", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {opt.rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {opt.qdisc if interface=='host10' else 'fq'}{' nopacing' if ((opt.qdisc=='cn' or opt.qdisc=='fq') and opt.cc != 'bbr') or interface!='host10' else ''}{f' quantum 3028 initial_quantum 3028' if opt.qdisc=='cn' or opt.qdisc=='fq' or interface!='host10' else ''}{f' flow_limit {int(math.ceil(BDP_packets))} guard_interval 1.25 max_increase 2.0 max_monitoring_interval 1.0' if interface=='host10' and opt.qdisc=='cn' else ''}", {"env": env_with_tc})])
+			run_commands([f"tc qdisc add dev {interface} root handle 1: netem{f' delay {int(opt.delay_to_add)}ms' if interface=='host00' else ''}", f"tc qdisc add dev {interface} parent 1: handle 2: htb default 21", f"tc class add dev {interface} parent 2: classid 2:21 htb rate {opt.rate}mbit", (f"tc qdisc add dev {interface} parent 2:21 handle 3: {opt.qdisc if interface=='host10' else 'fq'}{' nopacing' if ((opt.qdisc=='cocoa' or opt.qdisc=='fq') and opt.cc != 'bbr') or interface!='host10' else ''}{f' quantum 3028 initial_quantum 3028' if opt.qdisc=='cocoa' or opt.qdisc=='fq' or interface!='host10' else ''}{f' flow_limit {int(math.ceil(BDP_packets))} guard_interval 1.25 max_increase 2.0 max_monitoring_interval 1.0' if interface=='host10' and opt.qdisc=='cocoa' else ''}", {"env": env_with_tc})])
 		vnet.update_hosts()
 
 		if opt.cc=="bbr":

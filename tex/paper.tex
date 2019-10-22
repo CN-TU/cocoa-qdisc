@@ -69,7 +69,7 @@
 \algnewcommand\Break{\textbf{break}}
 
 \newcommand{\algorithmautorefname}{Algorithm}
-\newcommand{\name}{cocoa}
+\newcommand{\codel}{CoDel}
 
 %%
 %% Submission ID.
@@ -113,7 +113,7 @@
 \newacronym{cocoa}{cocoa}{Congestion Control Aware qdisc}
 
 \begin{abstract}
-Recent model-based congestion control algorithms such as BBR use repeated measurements at the end-point to build a model of the network connection and use it to achieve optimal throughput with low queuing delay. Conversely, applying this model-based approach to Active Queue Management (AQM) has so far received less attention. We propose an AQM scheduler based on fair queuing, which adapts the buffer size depending on the needs of each flow without requiring active participation from the endpoint. We implement this scheduler for the Linux kernel and show that it interacts well with the most common congestion control algorithms and can significantly increase throughput compared to CoDel while avoiding overbuffering.
+Recent model-based congestion control algorithms such as BBR use repeated measurements at the end-point to build a model of the network connection and use it to achieve optimal throughput with low queuing delay. Conversely, applying this model-based approach to Active Queue Management (AQM) has so far received less attention. We propose an AQM scheduler based on fair queuing, which adapts the buffer size depending on the needs of each flow without requiring active participation from the endpoint. We implement this scheduler for the Linux kernel and show that it interacts well with the most common congestion control algorithms and can significantly increase throughput compared to \codel while avoiding overbuffering.
 \end{abstract}
 
 %%
@@ -147,8 +147,6 @@ Recent model-based congestion control algorithms such as BBR use repeated measur
 %  preparation of the documentation of their work.
 %\end{abstract}
 
-\newcommand{\codel}{CoDel}
-
 \settopmatter{printfolios=true}
 \maketitle
 
@@ -156,20 +154,20 @@ Recent model-based congestion control algorithms such as BBR use repeated measur
 
 In the last decades various \gls{aqm} mechanisms have been proposed to minimize excessive \textit{standing queues} in the Internet. One of the most influential recent efforts is \codel{} \cite{nichols_controlling_2012} whose goal is that the queuing delay at the bottleneck link is at least once under 5\;ms in a moving window of 100\;ms. 
 
-While it is important to keep the queuing delay constrained, it is also necessary to ensure that overly aggressive flows cannot benefit by ``stealing'' less aggressive flows' bandwidth. Thus researchers and engineers have developed \textit{\gls{fq}} mechanisms \cite{shreedhar_efficient_1996,dumazet_pkt_sched:_2013} to isolate different flows' queues so that for example a delay-sensitive live video call cannot be impaired by a concurrent bulk transfer which takes all the available bandwidth. 
+While it is important to keep the queuing delay constrained, it is also necessary to ensure that overly aggressive flows cannot benefit from ``stealing'' less aggressive flows' bandwidth. Thus researchers and engineers have developed \textit{\gls{fq}} mechanisms \cite{shreedhar_efficient_1996,dumazet_pkt_sched:_2013} to isolate different flows' queues so that for example a delay-sensitive live video call cannot be impaired by a concurrent bulk transfer which consumes all the available bandwidth. 
 
 Recent approaches have tried to combine \gls{aqm} with \gls{fq}. \cite{taht_flow_2018} demonstrate \textit{fq\_codel}, a \gls{qdisc} that uses \gls{fq} and lets \codel{} manage each queue. \cite{hoiland-jorgensen_piece_2018} expand upon this and create the \textit{cake} \gls{qdisc} that also adds features such as not only per-flow queuing but also per-host queuing for even increased fairness. Furthermore they also include bandwidth shaping into their solution and aim to create one \gls{qdisc} that is easy to configure, can be easily deployed on home routers and offers all features in one solution. 
 
 While we do not want to make statements about the general performance of \codel{}, we show that fq\_codel and cake do not optimally use available bandwidth in common network configurations for common \glspl{cca}. This becomes especially prevalent for links with a high bandwidth or a large \gls{rtt} but is already noticeable for common scenarios, such as a link with 100\;Mbit/s and an \gls{rtt} of 50\;ms. 
 
-We show that the impaired performance is a result of keeping the queuing delay under 5\;ms, which hinders \glspl{cca} such as Reno or Cubic from reaching maximum throughput. The main drawback is that these \glspl{qdisc} aim to keep the delay under the threshold no matter the effect on throughput and do not take the \gls{cc} of the flow into account. 
+We show that the impaired performance is a result of keeping the queuing delay under 5\;ms, which hinders \glspl{cca} such as Reno or Cubic from reaching maximum throughput. Moreover, this behavior can result in unnecessary standing queues on links with very low latencies under 10\;ms, which occur in data centers and between users and close by servers of content delivery networks. 
 
-As a remedy, we conceive an \gls{aqm} mechanism that explicitly measures the behavior of the \gls{cc} of a flow and dynamically changes the buffer so that 
+As a remedy, we conceive a fair \gls{aqm} mechanism that explicitly measures the behavior of the \gls{cc} of a flow and dynamically changes the buffer so that 
 \begin{enumerate}[topsep=0pt,wide,labelwidth=!,labelindent=0pt]
-\item link utilization is optimized and
+\item link utilization is maximized and
 \item queuing delay is kept at the minimum that is required to achieve optimum throughput considering the \gls{cc}.
 \end{enumerate}
-Finally, we develop a prototype of \gls{cocoa} and show that it can achieve these objectives for the most common loss-based \glspl{cca}, Reno \cite {jacobson_congestion_1988} and Cubic \cite{ha_cubic:_2008}. These \glspl{cca} operate by continuously increasing the number of bytes that are allowed to be in the network (congestion window) if no packet loss is experienced and by sharply decreasing this number if a packet is lost (multiplicative decrease). With Cubic being the default \gls{cc} in all major OS, we especially emphasize our evaluation on improving its performance. Contrasting to the aforementioned \glspl{cca}, recently proposed BBR \cite{cardwell_bbr:_2016} does not continuously increase and then sharply decrease when packets are lost but instead uses periodic measurements to estimate the available bandwidth as well as the minimal \gls{rtt} and then tries to stay at this point of optimal bandwidth and minimal delay. BBR is thus considered to be \textit{model-based}. We demonstrate that \gls{cocoa} also behaves well in interaction with BBR~v1.
+Finally, we develop a prototype of the \gls{cocoa} and show that it can achieve these objectives for the most common loss-based \glspl{cca}, Reno \cite {jacobson_congestion_1988} and Cubic \cite{ha_cubic:_2008}. These \glspl{cca} operate by continuously increasing the number of bytes that are allowed to be in the network (congestion window) if no packet loss is experienced and by sharply decreasing this number if a packet is lost (multiplicative decrease). With Cubic being the default \gls{cc} in all major OS, we especially emphasize our evaluation on improving its performance. Contrasting to the aforementioned \glspl{cca}, recently proposed BBR \cite{cardwell_bbr:_2016} does not continuously increase and then sharply decrease when packets are lost but instead uses periodic measurements to estimate the available bandwidth as well as the minimal \gls{rtt} and then tries to stay at this point of optimal bandwidth and minimal delay. BBR is thus considered to be \textit{model-based}. We show that \gls{cocoa} also behaves well in interaction with BBR~v1.
 
 \section{Concept}
 
@@ -181,7 +179,7 @@ Finally, we develop a prototype of \gls{cocoa} and show that it can achieve thes
 
 \begin{figure}[h]
 \includegraphics[width=\columnwidth]{figures/cocoa_illustration_too_much.pdf}
-\caption{If the buffer is too large, loss-based \glspl{cca} will keep a unnecessary standing queue which is not necessary for achieving full link utilization.}
+\caption{If the buffer is too large, loss-based \glspl{cca} will keep an unnecessary standing queue which is not necessary for achieving full link utilization.}
 \label{fig:tooMuch}
 \end{figure}
 
@@ -191,8 +189,8 @@ The other case we want to avoid is a persisting standing queue, as depicted in \
 
 These considerations lead us to designing an algorithm that dynamically measures the \gls{cca} and adapts the buffer size to reach our goal of maximum throughput and minimal delay. The basic functionality of this algorithm would be to
 \begin{enumerate}[topsep=0pt,wide,labelwidth=!,labelindent=0pt]
-\item observe the \gls{cca} for a certain measurement period and
-\item increase or decrease the buffer size depending on whether the scenario of \autoref{fig:tooLittle} or \autoref{fig:tooMuch} is true. 
+\item observe the \gls{cca} of each flow for a certain measurement period and
+\item increase or decrease the buffer size for this flow depending on whether the scenario of \autoref{fig:tooLittle} or \autoref{fig:tooMuch} is true. 
 \end{enumerate}
 The challenge about this is to define the measurement period: As \autoref{fig:tooLittle} and \autoref{fig:tooMuch} show, we would like to use the measurement period that is the longest period between two packet losses. If this period is observed, it is possible to compute the standing queue as simply the minimum queue observed in this interval. For example, if the minimum queue is 3 packets it means, that there is a standing queue of 3 packets and the algorithm will reduce buffer size by 3 to eliminate the unnecessary queuing. Conversely, if the buffer is too small, the algorithm computes how long the link was underutilized and how many packets could have been transmitted during the idle period. The buffer size is then increased by this number of packets. 
 
@@ -206,7 +204,7 @@ The solution is thus to use a \textit{\gls{gi}}: The algorithm always waits for 
 \label{fig:intervals}
 \end{figure}
 
-For example, we choose the multiplier to be $\frac{1}{2}$. Now, if the \gls{li} is in the previous \gls{gi} was 100\,ms, then the next \gls{gi} is at least $\frac{1}{2} 100\,ms$. During the \gls{gi} we monitor all intervals and if the current interval is the longest one, it becomes the new \gls{li}. The \gls{gi} ends when the first packet loss occurs after the end of the \gls{gi}. 
+For example, we choose the multiplier to be $\frac{1}{2}$. Now, if the \gls{li} in the previous \gls{gi} was 100\,ms, then the next \gls{gi} is at least $\frac{1}{2} 100\,ms$. During the \gls{gi} we monitor all intervals and if the current interval is the longest one, it becomes the new \gls{li}. The \gls{gi} ends when the first packet loss occurs after the minimum duration of the \gls{gi} elapsed. 
 
 \begin{algorithm}[h]
 \caption{Procedure that is executed when a new packet is received to be enqueued.}
@@ -244,7 +242,7 @@ Almost all of the logic of our algorithm is executed when a new packet is receiv
 
 \subsection{Choice of the multiplier}
 
-The purpose of the multiplier, which is used to multiply the \gls{li} of previous \gls{gi} to define the new \gls{gi}, is to prevent that the short gap between two subsequent packet losses is used as the interval to determine whether the buffer size has to be adapted. This means that the multiplier must be large enough so that it allows to skip over the packet losses that occur when the buffer is full. For Reno and Cubic, the loss-free period is very large compared to the period during which packet loss occurs. Specifically, the period with packet loss has the length of one \gls{rtt} since Reno and Cubic reduce their sending rate as soon as packet loss occurs, thus ending the packet loss. This means that the multiplier can be very small in order to work for these \glspl{cca}. We conducted experiments with the multiplier being $0.5$ and have never encountered the problem that the interval between adjacent packet losses is considered the longest interval and that the buffer is cut to virtually nothing because a standing queue is assumed. However, BBR~v1 uses a completely different approach compared to Reno and Cubic to probe for bandwidth: It periodically increases its sending rate and then reduces it again to see if it can achieve more throughput. This happens with the following pattern: $[\frac{5}{4},\frac{3}{4},1,1,1,1,1,1]$. The sending rate is increased to probe for more bandwidth, then decreased to reduce the standing queue potentially formed and after that BBR is simply keeping the sending rate to match the estimated bandwidth. Each of these eight phases lasts one \gls{rtt}. BBR uses a random cyclic permutation of this pattern with the only condition being that it cannot start with $\frac{3}{4}$. The following pattern could thus occur: $[1,1,1,1,1,1,\frac{5}{4},\frac{3}{4},\frac{5}{4},\frac{3}{4},1,1,1,1,1,1]$. If the \gls{gi} ends after the first 6 phases and also the \gls{li} was these six phase, with a factor of $0.5$, the next \gls{gi} would thus end at the end of phase 8. Then, the \gls{li} would be the 8th cycle. The next \gls{gi} would then be of the duration of $0.5$ phases and would then end in the middle of cycle 9. This would be erroneous because this is a probing phase during which packet loss occurs. The aforementioned problem of erroneously and significantly reducing the buffer could thus occur. This means that for BBR~v1 the multiplier must be larger than 1 since it can happen that non-probing phases are followed by probing phases of the same length. From these considerations it follows that for our experiments we generally use a multiplier of $1.25$. The behavior is different for BBR~v2 which drastically changed the probing phase and now consists of a random 2-3\,s phase of constant sending rate (cruising) followed by a quick probing phase followed by a decrease phase \cite{cardwell_bbr_2019-1,cardwell_bbr_2019}. We thus conjecture that a multiplier of $0.5$ is sufficient for BBR~v2. However, we could not finally confirm this since BBR~v2 is still not completely finished. 
+The purpose of the multiplier, which is used to multiply the \gls{li} of previous \gls{gi} to define the new \gls{gi}, is to prevent that the short gap between two subsequent packet losses is used as the interval to determine whether the buffer size has to be adapted. This means that the multiplier must be large enough so that it allows to skip over the packet losses that occur when the buffer is full. For Reno and Cubic, the loss-free period is very large compared to the period during which packet loss occurs. Specifically, the period with packet loss has the length of one \gls{rtt} since Reno and Cubic reduce their sending rate as soon as packet loss occurs, thus ending the packet loss. This means that the multiplier can be very small in order to work for these \glspl{cca}. We conducted experiments with the multiplier being $0.5$ and have never encountered the problem that the interval between adjacent packet losses is considered the longest interval and that the buffer is cut to virtually nothing because a standing queue is assumed. However, BBR~v1 uses a completely different approach compared to Reno and Cubic to probe for bandwidth: It periodically increases its sending rate and then reduces it again to see if it can achieve more throughput. This happens with the following pattern: $[\frac{5}{4},\frac{3}{4},1,1,1,1,1,1]$. The sending rate is increased to probe for more bandwidth, then decreased to reduce the standing queue potentially formed and after that BBR is simply keeping the sending rate to match the estimated bandwidth. Each of these eight phases lasts one \gls{rtt}. BBR uses a random cyclic permutation of this pattern with the only condition being that it cannot start with $\frac{3}{4}$. The following pattern could thus occur: $[1,1,1,1,1,1,\frac{5}{4},\frac{3}{4},\frac{5}{4},\frac{3}{4},1,1,1,1,1,1]$. If the \gls{gi} ends after the first 6 phases and also the \gls{li} was these six phase, with a factor of $0.5$, the next \gls{gi} would thus end at the end of phase 8. Then, the \gls{li} would be the 8th cycle. The next \gls{gi} would then be of the duration of $0.5$ phases and would then end in the middle of cycle 9. This would be erroneous because this is a probing phase during which packet loss occurs. The aforementioned problem of erroneously and significantly reducing the buffer could thus occur. This means that for BBR~v1 the multiplier must be larger than 1 since it can happen that non-probing phases are followed by probing phases of the same length. From these considerations it follows that for our experiments we generally use a multiplier of $1.25$. The behavior is different for BBR~v2 which drastically changed the probing phase and now consists of a random 2-3\,s phase of constant sending rate (cruising) followed by a quick probing phase followed by a decrease phase \cite{cardwell_bbr_2019-1,cardwell_bbr_2019}. We thus conjecture that a multiplier of $0.5$ is sufficient for BBR~v2. However, we could not finally confirm this since BBR~v2 is still under development. 
 
 \subsection{Maximum buffer increase}
 
@@ -252,7 +250,7 @@ Another potential problem is the following: If the available share of bandwidth 
 
 \subsection{Maximum \gls{gi}}
 
-One more challenge is posed by the following consideration: If a delay-based \gls{cca} is in its stable state, no packet loss should occur. The \gls{li} could thus become very large (like tens of seconds) and also the next \gls{gi} would be extremely large. This can be a problem if a delay-based \gls{cca} like Vegas \cite{brakmo_tcp_1995} is used for a long flow and then after several seconds, the bandwidth drastically lowers. Then suddenly packet loss could occur but the \gls{gi} would be so long that nothing would happen for a long time. To counter this, we add a parameter that specifies the maximum duration of the \gls{gi}. We set this parameter to 1\,s. This means that we also assume that no flows are handled by \gls{cocoa} which have an \gls{rtt} larger than 1\,s. Another possibility for setting this parameter is to set it to a multiple of the \gls{rtt}, for example 2, 4 or 8 times the most recent \gls{rtt}. \gls{rtt} could be measured using TCP timestamps \cite{borman_tcp_2014} in case of TCP flows or the spin bit \cite{kuhlewind_quic_2018} for QUIC. 
+One more challenge is posed by the following consideration: If a delay-based \gls{cca} is in its stable state, no packet loss should occur. The \gls{li} could thus become very large (like tens of seconds) and also the next \gls{gi} would be extremely large. This can be a problem if a delay-based \gls{cca} like Vegas \cite{brakmo_tcp_1995} is used for a long flow and then after several seconds, the bandwidth drastically lowers. Then suddenly packet loss could occur but the \gls{gi} would be so long that nothing would happen for a long time. To counter this, we add a parameter that specifies the maximum duration of the \gls{gi}. We set this parameter to 1\,s. This means that we also assume that no flows are handled by \gls{cocoa} which have an \gls{rtt} larger than 1\,s. Another possibility for setting this parameter is to use a multiple of the \gls{rtt}, for example 2, 4 or 8 times the most recent \gls{rtt}. \gls{rtt} could be measured using TCP timestamps \cite{borman_tcp_2014} in case of TCP flows or the spin bit \cite{kuhlewind_quic_2018} for QUIC. 
 
 \section{Implementation}
 
@@ -260,7 +258,7 @@ We implement \gls{cocoa} as an extension of the ``fq'' \gls{qdisc} \cite{dumazet
 
 \section{Evaluation}
 
-We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/CN-TU/py-virtnet}) toolkit to build a virtual network using Linux's network namespaces. We initialize the buffer size for \gls{cocoa} to 100 packets per flow like in fq. The testbed consists of a sender and a receiver connected via a switch. We runs the \gls{qdisc} being tested on the interface that connects the switch to the receiver. We introduce delay with \texttt{netem} and limit bandwidth with \texttt{htb}. 
+We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/CN-TU/py-virtnet}) toolkit to build a virtual network using Linux's network namespaces. We initialize the buffer size for \gls{cocoa} to 100 packets per flow like in fq. The testbed consists of a sender and a receiver connected via a switch. We run the \gls{qdisc} being tested on the interface that connects the switch to the receiver. We introduce delay with \texttt{netem} and limit bandwidth with \texttt{htb}. 
 
 \begin{figure}[h]
 %\subfloat[Throughput of the fq \gls{qdisc}\label{fig:fqThroughput}
@@ -297,11 +295,11 @@ We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/C
 %]{
 \includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}
 %}{}
-\caption{Throughput and delay of a Cubic flow with \gls{cocoa} at the bottleneck. The initial bandwidth is 20\,Mbit/s but we double after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by \gls{cocoa}.}
+\caption{Throughput and delay of a Cubic flow with \gls{cocoa} at the bottleneck. The initial bandwidth is 20\,Mbit/s but we double it after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by \gls{cocoa}.}
 \label{fig:cn2}
 \end{figure}
 
-First we evaluate if \gls{cocoa} is able to maintain a small buffer like it is necessary in case of small \glspl{bdp}. As can be seen in \autoref{fig:fq} the regular fq qdisc maintains a standing queue and unnecessarily leads to a significant increase in \gls{rtt} (100\,ms minimum, when the real minimum is 10\,ms). In contrast, \autoref{fig:cn} maintains the full throughput while at the same time keeping the delay minimal and not keeping a standing queue. Also, when drastically changing the bandwidth by halving it (\autoref{fig:cn}) or doubling it (\autoref{fig:cn2}) \gls{cocoa} rapidly adapts to the new conditions and returns to the optimum state. 
+First we evaluate if \gls{cocoa} is able to maintain a small buffer like it is necessary in case of small \glspl{bdp}. As can be seen in \autoref{fig:fq} the regular fq qdisc maintains a standing queue and unnecessarily leads to a significant increase in \gls{rtt} (100\,ms minimum, when the real minimum is 10\,ms). In contrast, \autoref{fig:cn} maintains the full throughput while at the same time keeping the delay minimal and not having a standing queue. Also, when drastically changing the bandwidth by halving it (\autoref{fig:cn}) or doubling it (\autoref{fig:cn2}) \gls{cocoa} rapidly adapts to the new conditions and returns to the optimum state. 
 
 \begin{figure}[h]
 %\subfloat[Throughput of the fq\_codel \gls{qdisc}\label{fig:fqCodelThroughputLong}
@@ -341,7 +339,7 @@ Reno	& 84.1 & 52.7 & 81.1 & 51.5 & 97.9 & 98.2 \\
 \end{tabular}
 \end{table}
 
-Next we compare \gls{cocoa} against fq\_codel. \autoref{fig:fqCodel} shows that fq\_codel keeps the queuing delay under 5\,ms. Also it shows that keeping the queuing delay that low is detrimental for achieving full throughput when using the Cubic \gls{cca}. With \gls{cocoa} we achieve throughput that is more than 10\% higher overall, while only slightly increasing the average delay. In addition to Cubic, we performed experiments with Reno. Here, over a 240\,s flow of 100\,Mbit/s with a delay of 50\,ms, \gls{cocoa} achieves more than 20\% higher throughput than fq\_codel. The average \gls{rtt} for fq\_codel is 51.34\,ms while it is 96.78\,ms for \gls{cocoa}. \autoref{tab:performance_results} shows that \gls{cocoa} reaches link utilizations close to 100\% for both Cubic and Reno in large \gls{bdp} scenarios. \gls{rtt} can be higher than for other \glspl{qdisc} if this is required to achieve optimum throughput for the \gls{cca} for the given link speed and base \gls{rtt}. 
+Next we compare \gls{cocoa} against fq\_codel. \autoref{fig:fqCodel} shows that fq\_codel keeps the queuing delay under 5\,ms. It also shows that keeping the queuing delay that low is detrimental for achieving full throughput when using the Cubic \gls{cca}. With \gls{cocoa} we achieve throughput that is more than 10\% higher overall, while only slightly increasing the average delay. In addition to Cubic, we performed experiments with Reno. Here, over a 240\,s flow of 100\,Mbit/s with a delay of 50\,ms, \gls{cocoa} achieves more than 20\% higher throughput than fq\_codel. The average \gls{rtt} for fq\_codel is 51.34\,ms while it is 96.78\,ms for \gls{cocoa}. \autoref{tab:performance_results} shows that \gls{cocoa} reaches link utilizations close to 100\% for both Cubic and Reno in large \gls{bdp} scenarios. \gls{rtt} can be higher than for other \glspl{qdisc} if this is required to achieve optimum throughput for the \gls{cca} for the given link speed and base \gls{rtt}. 
 
 Besides fq\_codel possibly leading to lower throughput as we have shown, another problem is that for links with a small \gls{bdp} fq\_codel can keep a standing queue akin to fq since fq\_codel only wants queuing delay to fall below 5\,ms once every 100\,ms. %For example, on a link with a base \gls{rtt} of 5\,ms, fq\_codel would accept a permanent standing queue of 4.9\,ms, leading to overall \gls{rtt} being doubled, which is not required for achieving optimal throughput. 
 We also ran experiments for these low \gls{bdp} scenarios: For a link speed of 20\;Mbit/s and a base \gls{rtt} of 1\;ms for a Cubic flow both \gls{cocoa} and fq\_codel achieve 98\% utilization. The average \gls{rtt} is 6.86\,ms for \gls{cocoa} and 7.31\;ms for fq\_codel.
