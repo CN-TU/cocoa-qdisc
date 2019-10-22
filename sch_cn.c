@@ -969,9 +969,10 @@ static const struct nla_policy cn_policy[TCA_CN_MAX + 1] = {
 	[TCA_CN_BUCKETS_LOG]		= { .type = NLA_U32 },
 	[TCA_CN_FLOW_REFILL_DELAY]	= { .type = NLA_U32 },
 	[TCA_CN_LOW_RATE_THRESHOLD]	= { .type = NLA_U32 },
-	// Of course floating point types are not supported 😒
-	// [TCA_CN_GUARD_INTERVAL]	= { .type = NLA_UNSPEC },
+	[TCA_CN_CE_THRESHOLD]	= { .type = NLA_U64 },
 	[TCA_CN_GUARD_INTERVAL]	= { .type = NLA_U64 },
+	[TCA_CN_MAX_INCREASE]	= { .type = NLA_U64 },
+	[TCA_CN_MAX_MONITORING_INTERVAL]	= { .type = NLA_U64 },
 };
 
 static int cn_change(struct Qdisc *sch, struct nlattr *opt,
@@ -1164,10 +1165,18 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	return err;
 }
 
+static inline int nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
+{
+	u64 tmp = value;
+
+	return nla_put(skb, attrtype, sizeof(u64), &tmp);
+}
+
 static int cn_dump(struct Qdisc *sch, struct sk_buff *skb)
 {
 	struct cn_sched_data *q = qdisc_priv(sch);
 	struct nlattr *opts;
+	double max_monitoring_interval_as_double;
 
 	opts = nla_nest_start(skb, TCA_OPTIONS);
 	if (opts == NULL)
@@ -1175,6 +1184,7 @@ static int cn_dump(struct Qdisc *sch, struct sk_buff *skb)
 
 	/* TCA_CN_FLOW_DEFAULT_RATE is not used anymore */
 
+	max_monitoring_interval_as_double = (double) ((q->max_monitoring_interval)/NANOSECONDS_IN_ONE_SECOND);
 	if (nla_put_u32(skb, TCA_CN_PLIMIT, sch->limit) ||
 			nla_put_u32(skb, TCA_CN_FLOW_PLIMIT, q->flow_plimit) ||
 			nla_put_u32(skb, TCA_CN_QUANTUM, q->quantum) ||
@@ -1186,7 +1196,10 @@ static int cn_dump(struct Qdisc *sch, struct sk_buff *skb)
 			nla_put_u32(skb, TCA_CN_ORPHAN_MASK, q->orphan_mask) ||
 			nla_put_u32(skb, TCA_CN_LOW_RATE_THRESHOLD,
 			q->low_rate_threshold) ||
-			nla_put_u32(skb, TCA_CN_BUCKETS_LOG, q->cn_trees_log))
+			nla_put_u32(skb, TCA_CN_BUCKETS_LOG, q->cn_trees_log) ||
+			nla_put_u64(skb, TCA_CN_GUARD_INTERVAL, *((u64*) (&(q->guard_interval)))) ||
+			nla_put_u64(skb, TCA_CN_MAX_INCREASE, *((u64*) (&(q->max_increase)))) ||
+			nla_put_u64(skb, TCA_CN_MAX_MONITORING_INTERVAL, *((u64*) (&(max_monitoring_interval_as_double)))))
 		goto nla_put_failure;
 
 	return nla_nest_end(skb, opts);

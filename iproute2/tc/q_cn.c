@@ -58,6 +58,9 @@ static void explain(void)
 	fprintf(stderr, "              [ low_rate_threshold RATE ]\n");
 	fprintf(stderr, "              [ orphan_mask MASK]\n");
 	fprintf(stderr, "              [ ce_threshold TIME ]\n");
+	fprintf(stderr, "              [ guard_interval POSITIVE_REAL_NUMBER ]\n");
+	fprintf(stderr, "              [ max_increase POSITIVE_REAL_NUMBER ]\n");
+	fprintf(stderr, "              [ max_monitoring_interval SECONDS ]\n");
 }
 
 static unsigned int ilog2(unsigned int val)
@@ -353,27 +356,6 @@ static int cn_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		quantum = rta_getattr_u32(tb[TCA_CN_INITIAL_QUANTUM]);
 		fprintf(f, "initial_quantum %u ", quantum);
 	}
-	if (tb[TCA_CN_GUARD_INTERVAL] &&
-	    RTA_PAYLOAD(tb[TCA_CN_GUARD_INTERVAL]) >= sizeof(double)) {
-		guard_interval = *((double*) tb[TCA_CN_GUARD_INTERVAL]);
-
-		if (guard_interval > 0)
-			fprintf(f, "guard_interval %f ", guard_interval);
-	}
-	if (tb[TCA_CN_MAX_INCREASE] &&
-	    RTA_PAYLOAD(tb[TCA_CN_MAX_INCREASE]) >= sizeof(double)) {
-		max_increase = *((double*) tb[TCA_CN_MAX_INCREASE]);
-
-		if (max_increase > 0)
-			fprintf(f, "max_increase %f ", max_increase);
-	}
-	if (tb[TCA_CN_MAX_MONITORING_INTERVAL] &&
-	    RTA_PAYLOAD(tb[TCA_CN_MAX_MONITORING_INTERVAL]) >= sizeof(double)) {
-		max_monitoring_interval = *((double*) tb[TCA_CN_MAX_MONITORING_INTERVAL]);
-
-		if (max_monitoring_interval > 0)
-			fprintf(f, "max_monitoring_interval %f ", max_monitoring_interval);
-	}
 	if (tb[TCA_CN_FLOW_DEFAULT_RATE] &&
 	    RTA_PAYLOAD(tb[TCA_CN_FLOW_DEFAULT_RATE]) >= sizeof(__u32)) {
 		rate = rta_getattr_u32(tb[TCA_CN_FLOW_DEFAULT_RATE]);
@@ -393,12 +375,32 @@ static int cn_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 		refill_delay = rta_getattr_u32(tb[TCA_CN_FLOW_REFILL_DELAY]);
 		fprintf(f, "refill_delay %s ", sprint_time(refill_delay, b1));
 	}
-
 	if (tb[TCA_CN_CE_THRESHOLD] &&
 	    RTA_PAYLOAD(tb[TCA_CN_CE_THRESHOLD]) >= sizeof(__u32)) {
 		ce_threshold = rta_getattr_u32(tb[TCA_CN_CE_THRESHOLD]);
 		if (ce_threshold != ~0U)
 			fprintf(f, "ce_threshold %s ", sprint_time(ce_threshold, b1));
+	}
+	if (tb[TCA_CN_GUARD_INTERVAL] &&
+	    RTA_PAYLOAD(tb[TCA_CN_GUARD_INTERVAL]) >= sizeof(__u64)) {
+		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_CN_GUARD_INTERVAL]);
+		guard_interval = *((double*) &unsigned_integer);
+		if (guard_interval != ~0U)
+			fprintf(f, "guard_interval %f ", guard_interval);
+	}
+	if (tb[TCA_CN_MAX_INCREASE] &&
+	    RTA_PAYLOAD(tb[TCA_CN_MAX_INCREASE]) >= sizeof(__u64)) {
+		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_CN_MAX_INCREASE]);
+		max_increase = *((double*) &unsigned_integer);
+		if (max_increase != ~0U)
+			fprintf(f, "max_increase %f ", max_increase);
+	}
+	if (tb[TCA_CN_MAX_MONITORING_INTERVAL] &&
+	    RTA_PAYLOAD(tb[TCA_CN_MAX_MONITORING_INTERVAL]) >= sizeof(__u64)) {
+		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_CN_MAX_MONITORING_INTERVAL]);
+		max_monitoring_interval = *((double*) &unsigned_integer);
+		if (max_monitoring_interval != ~0U)
+			fprintf(f, "max_monitoring_interval %f ", max_monitoring_interval);
 	}
 
 	return 0;
