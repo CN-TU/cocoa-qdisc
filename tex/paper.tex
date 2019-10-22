@@ -181,7 +181,7 @@ Finally, we develop a prototype of \gls{cocoa} and show that it can achieve thes
 
 \begin{figure}[h]
 \includegraphics[width=\columnwidth]{figures/cocoa_illustration_too_much.pdf}
-\caption{If the buffer is too large, loss-based \glspl{cca} will keep a unnecessary standing queue. This queue is unnecessary since it is not generally required to achieve full link utilization.}
+\caption{If the buffer is too large, loss-based \glspl{cca} will keep a unnecessary standing queue which is not necessary for achieving full link utilization.}
 \label{fig:tooMuch}
 \end{figure}
 
@@ -259,7 +259,7 @@ We implement \gls{cocoa} as an extension of the ``fq'' \gls{qdisc} \cite{dumazet
 
 \section{Evaluation}
 
-We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/CN-TU/py-virtnet}) toolkit to build a virtual network using Linux's network namespaces. We initialize the buffer size for \gls{cocoa} to 100 packets per flow like in fq. 
+We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/CN-TU/py-virtnet}) toolkit to build a virtual network using Linux's network namespaces. We initialize the buffer size for \gls{cocoa} to 100 packets per flow like in fq. The testbed consists of a sender and a receiver connected via a switch. We runs the \gls{qdisc} being tested on the interface that connects the switch to the receiver. We introduce delay with \texttt{netem} and limit bandwidth with \texttt{htb}. 
 
 \begin{figure}[h]
 %\subfloat[Throughput of the fq \gls{qdisc}\label{fig:fqThroughput}
@@ -270,7 +270,7 @@ We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/C
 %]{
 \includegraphics[width=\columnwidth]{{{../plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap}}}
 %}{}
-\caption{Throughput and delay of a Cubic flow that is managed by fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. It is clear that there is a standing queue and after the bandwidth halves, the minimum delay is 100\,ms even though 10\,ms would be possible.}
+\caption{Throughput and delay of a Cubic flow with fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. It is clear that there is a standing queue and after the bandwidth halves, the minimum delay is 100\,ms even though 10\,ms would be possible.}
 \label{fig:fq}
 \end{figure}
 
@@ -283,7 +283,7 @@ We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/C
 %]{
 \includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}
 %}{}
-\caption{Throughput and delay of a Cubic flow that is managed by \gls{cocoa} at the bottleneck. The initial bandwidth is 20\,Mbit/s but we halve it after 30\,s. The delay is 10\,ms. \gls{cocoa} manages to keep the queuing delay minimal while achieving the same throughput as with an oversized buffer.}
+\caption{Throughput and delay of a Cubic flow with \gls{cocoa} at the bottleneck. The initial bandwidth is 20\,Mbit/s but we halve it after 30\,s. The delay is 10\,ms. \gls{cocoa} keeps the queuing delay minimal while achieving the same throughput as with an oversized buffer.}
 \label{fig:cn}
 \end{figure}
 
@@ -296,7 +296,7 @@ We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/C
 %]{
 \includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}
 %}{}
-\caption{Throughput and delay of a Cubic flow that is managed by \gls{cocoa} at the bottleneck. The initial bandwidth is 20\,Mbit/s but we double after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by \gls{cocoa}.}
+\caption{Throughput and delay of a Cubic flow with \gls{cocoa} at the bottleneck. The initial bandwidth is 20\,Mbit/s but we double after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by \gls{cocoa}.}
 \label{fig:cn2}
 \end{figure}
 
@@ -311,7 +311,7 @@ First we evaluate if \gls{cocoa} is able to maintain a small buffer like it is n
 %]{
 \includegraphics[width=\columnwidth]{{{../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}
 %}{}
-\caption{Throughput and delay of a Cubic flow that is managed by fq\_codel at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 101.61\,ms. Total throughput is 2615\,MB.}
+\caption{Throughput and delay of a Cubic flow with fq\_codel at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 101.61\,ms. Total throughput is 2615\,MB.}
 \label{fig:fqCodel}
 \end{figure}
 
@@ -324,12 +324,12 @@ First we evaluate if \gls{cocoa} is able to maintain a small buffer like it is n
 %]{
 \includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}
 %}{}
-\caption{Throughput and delay of a Cubic flow that is managed by \gls{cocoa} at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 130.36\,ms. Total throughput is 2893\,MB.}
+\caption{Throughput and delay of a Cubic flow with \gls{cocoa} at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 130.36\,ms. Total throughput is 2893\,MB.}
 \label{fig:cnLong}
 \end{figure}
 
 \begin{table}[t]
-\caption{Comparison of \glspl{qdisc} for loss-based \glspl{cca} on a link of 100\;Mbit/s with an \gls{rtt} of 50\;ms. Utilization in \% of the maximum capacity; \gls{rtt} in milliseconds. For Cubic fq achieves good performance. This is because its default buffer size of 100 packets coincidentially works well for this specific link speed and \gls{rtt}.} \label{tab:performance_results}
+\caption{Comparison of \glspl{qdisc} for loss-based \glspl{cca} on a link of 100\;Mbit/s with an \gls{rtt} of 50\;ms. Utilization in \% of maximum capacity; \gls{rtt} in milliseconds. For Cubic fq achieves good performance. This is because its default buffer size of 100 packets coincidentially works well for this specific link speed and \gls{rtt}.} \label{tab:performance_results}
 \begin{tabular}{l r r r r r r} \toprule
 & \multicolumn{2}{l}{fq} & \multicolumn{2}{l}{fq\_codel} & \multicolumn{2}{l}{\gls{cocoa}} \\
 \cmidrule(r){2-3} \cmidrule(lr){4-5} \cmidrule(l){6-7}
@@ -342,7 +342,8 @@ Reno	& 84.1 & 52.7 & 81.1 & 51.5 & 97.9 & 98.2 \\
 
 Next we compare \gls{cocoa} against fq\_codel. \autoref{fig:fqCodel} shows that fq\_codel keeps the queuing delay under 5\,ms. Also it shows that keeping the queuing delay that low is detrimental for achieving full throughput when using the Cubic \gls{cca}. With \gls{cocoa} we achieve throughput that is more than 10\% higher overall, while only slightly increasing the average delay. In addition to Cubic, we performed experiments with Reno. Here, over a 240\,s flow of 100\,Mbit/s with a delay of 50\,ms, \gls{cocoa} achieves more than 20\% higher throughput than fq\_codel. The average \gls{rtt} for fq\_codel is 51.34\,ms while it is 96.78\,ms for \gls{cocoa}. \autoref{tab:performance_results} shows that \gls{cocoa} reaches link utilizations close to 100\% for both Cubic and Reno in large \gls{bdp} scenarios. \gls{rtt} can be higher than for other \glspl{qdisc} if this is required to achieve optimum throughput for the \gls{cca} for the given link speed and base \gls{rtt}. 
 
-Besides fq\_codel possibly leading to lower throughput as we have shown, another problem is that for links with a small \gls{bdp} fq\_codel can keep a standing queue akin to fq since fq\_codel only wants queuing delay to fall below 5\,ms once every 100\,ms. For example, on a link with a base \gls{rtt} of 5\,ms, fq\_codel would accept a permanent standing queue of 4.9\,ms, leading to overall \gls{rtt} being doubled, which is not required for achieving optimal throughput.
+Besides fq\_codel possibly leading to lower throughput as we have shown, another problem is that for links with a small \gls{bdp} fq\_codel can keep a standing queue akin to fq since fq\_codel only wants queuing delay to fall below 5\,ms once every 100\,ms. %For example, on a link with a base \gls{rtt} of 5\,ms, fq\_codel would accept a permanent standing queue of 4.9\,ms, leading to overall \gls{rtt} being doubled, which is not required for achieving optimal throughput. 
+We also ran experiments for these low \gls{bdp} scenarios: For a link speed of 20\;Mbit/s and a base \gls{rtt} of 1\;ms for a Cubic flow both \gls{cocoa} and fq\_codel achieve 98\% utilization. The average \gls{rtt} is 6.86\,ms for \gls{cocoa} and 7.31\;ms for fq\_codel.
 
 We also ran experiments with the cake \gls{qdisc}. However, results were very similar to those of fq\_codel, which is no surprise since cake is based on fq\_codel.
 
@@ -355,7 +356,7 @@ We also ran experiments with the cake \gls{qdisc}. However, results were very si
 %]{
 \includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}
 %}{}
-\caption{Throughput and delay of a BBR~v1 flow that is managed by \gls{cocoa} at the bottleneck. The bandwidth is 50\,Mbit/s. The delay is 10\,ms and we halve it after 30\,s.}
+\caption{Throughput and delay of a BBR~v1 flow with \gls{cocoa} at the bottleneck. The bandwidth is 50\,Mbit/s. The delay is 10\,ms and we halve it after 30\,s.}
 \label{fig:cnBBR}
 \end{figure}
 
