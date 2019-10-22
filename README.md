@@ -21,11 +21,11 @@ To make the configuration for the module visible to the ```tc``` utility we have
 
 Finally, you can use the qdisc on an interface: 
 
-    sudo -E tc qdisc replace dev <interface> root cn
+    sudo -E tc qdisc replace dev <interface> root cocoa
     
 ```tc``` also allows you to specify options like this: 
 
-    sudo -E tc qdisc replace dev <interface> root cn initial_quantum 3028 quantum 3028
+    sudo -E tc qdisc replace dev <interface> root cocoa initial_quantum 3028 quantum 3028
     
 ## Experimenting
 To run experiments, make sure you have [```py-virtnet```](https://github.com/CN-TU/py-virtnet) installed and then run
