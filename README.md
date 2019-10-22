@@ -34,6 +34,6 @@ To run experiments, make sure you have [```py-virtnet```](https://github.com/CN-
 
     sudo bash -c 'echo > /sys/kernel/debug/tracing/trace' && sudo bash -c 'echo 1 > /sys/kernel/debug/tracing/tracing_on' && sudo python3 test.py --rate 20 --delay_to_add 1 --time 30 --qdisc cocoa --change 1 --cc cubic
     
-After running experiments with our qdisc, you can look at detailed output in the kernel tracing file at ```/sys/kernel/debug/tracing/trace```.
+After running experiments with our cocoa, you can look at detailed output in the kernel tracing file at ```/sys/kernel/debug/tracing/trace```.
 
-All tests were performed on kernel ```4.19.0-6-amd64``` on Debian Buster. We use python 3.7.2.
+All tests were performed on kernel ```4.19.0-6-amd64``` on Debian Buster. We use Python 3.7.2.
