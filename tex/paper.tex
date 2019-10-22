@@ -191,7 +191,7 @@ The other case we want to avoid is a persisting standing queue, as depicted in \
 
 These considerations lead us to designing an algorithm that dynamically measures the \gls{cca} and adapts the buffer size to reach our goal of maximum throughput and minimal delay. The basic functionality of this algorithm would be to
 \begin{enumerate}[topsep=0pt,wide,labelwidth=!,labelindent=0pt]
-\item observe the \gls{cca} for a certain measurement period and then
+\item observe the \gls{cca} for a certain measurement period and
 \item increase or decrease the buffer size depending on whether the scenario of \autoref{fig:tooLittle} or \autoref{fig:tooMuch} is true. 
 \end{enumerate}
 The challenge about this is to define the measurement period: As \autoref{fig:tooLittle} and \autoref{fig:tooMuch} show, we would like to use the measurement period that is the longest period between two packet losses. If this period is observed, it is possible to compute the standing queue as simply the minimum queue observed in this interval. For example, if the minimum queue is 3 packets it means, that there is a standing queue of 3 packets and the algorithm will reduce buffer size by 3 to eliminate the unnecessary queuing. Conversely, if the buffer is too small, the algorithm computes how long the link was underutilized and how many packets could have been transmitted during the idle period. The buffer size is then increased by this number of packets. 
@@ -225,6 +225,7 @@ For example, we choose the multiplier to be $\frac{1}{2}$. Now, if the \gls{li} 
 		\ElsIf{current\_time $\geq$ end\_the\_current\_\gls{gi}}
 			\If{there was a standing queue in the \gls{li} of the \gls{gi}}
 				\State buffer\_size $\gets$ buffer\_size - standing\_queue
+				\State drop superfluous packets
 			\EndIf
 			\State start a new interval
 			\State start a new \gls{gi}

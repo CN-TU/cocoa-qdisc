@@ -8,7 +8,7 @@ include ../config.mk
 SHARED_LIBS ?= y
 
 TCMODULES :=
-TCMODULES += q_cn.o
+TCMODULES += q_cocoa.o
 TCMODULES += q_fifo.o
 TCMODULES += q_sfq.o
 TCMODULES += q_red.o
@@ -103,7 +103,7 @@ ifneq ($(TC_CONFIG_NO_XT),y)
     endif
   endif
 endif
-TCSO += q_cn.so
+TCSO += q_cocoa.so
 
 TCOBJ += $(TCMODULES)
 # TCOBJ := $(TCMODULES)

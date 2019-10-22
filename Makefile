@@ -9,11 +9,11 @@ default:
 	@$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 install:
-	install -v -m 644 sch_cn.ko $(IDIR)
+	install -v -m 644 sch_cocoa.ko $(IDIR)
 	depmod "$(KERNEL_VERSION)"
-	[ "$(KERNEL_VERSION)" != `uname -r` ] || modprobe sch_cn
+	[ "$(KERNEL_VERSION)" != `uname -r` ] || modprobe sch_cocoa
 
 clean:
 	@$(MAKE) -C $(KDIR) M=$(PWD) clean
 
-obj-m := sch_cn.o
+obj-m := sch_cocoa.o

@@ -47,11 +47,11 @@
 
 #include "utils.h"
 #include "tc_util.h"
-#include "cn_opts.h"
+#include "cocoa_opts.h"
 
 static void explain(void)
 {
-	fprintf(stderr, "Usage: ... cn [ limit PACKETS ] [ flow_limit PACKETS ]\n");
+	fprintf(stderr, "Usage: ... cocoa [ limit PACKETS ] [ flow_limit PACKETS ]\n");
 	fprintf(stderr, "              [ quantum BYTES ] [ initial_quantum BYTES ]\n");
 	fprintf(stderr, "              [ maxrate RATE  ] [ buckets NUMBER ]\n");
 	fprintf(stderr, "              [ [no]pacing ] [ refill_delay TIME ]\n");
@@ -75,7 +75,7 @@ static unsigned int ilog2(unsigned int val)
 	return res;
 }
 
-static int cn_parse_opt(struct qdisc_util *qu, int argc, char **argv,
+static int cocoa_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 			struct nlmsghdr *n, const char *dev)
 {
 	unsigned int plimit;
@@ -242,66 +242,66 @@ static int cn_parse_opt(struct qdisc_util *qu, int argc, char **argv,
 	if (buckets) {
 		unsigned int log = ilog2(buckets);
 
-		addattr_l(n, 1024, TCA_CN_BUCKETS_LOG,
+		addattr_l(n, 1024, TCA_COCOA_BUCKETS_LOG,
 			  &log, sizeof(log));
 	}
 	if (set_plimit)
-		addattr_l(n, 1024, TCA_CN_PLIMIT,
+		addattr_l(n, 1024, TCA_COCOA_PLIMIT,
 			  &plimit, sizeof(plimit));
 	if (set_flow_plimit)
-		addattr_l(n, 1024, TCA_CN_FLOW_PLIMIT,
+		addattr_l(n, 1024, TCA_COCOA_FLOW_PLIMIT,
 			  &flow_plimit, sizeof(flow_plimit));
 	if (set_quantum)
-		addattr_l(n, 1024, TCA_CN_QUANTUM, &quantum, sizeof(quantum));
+		addattr_l(n, 1024, TCA_COCOA_QUANTUM, &quantum, sizeof(quantum));
 	if (set_initial_quantum)
-		addattr_l(n, 1024, TCA_CN_INITIAL_QUANTUM,
+		addattr_l(n, 1024, TCA_COCOA_INITIAL_QUANTUM,
 			  &initial_quantum, sizeof(initial_quantum));
 	if (pacing != -1)
-		addattr_l(n, 1024, TCA_CN_RATE_ENABLE,
+		addattr_l(n, 1024, TCA_COCOA_RATE_ENABLE,
 			  &pacing, sizeof(pacing));
 	if (set_maxrate)
-		addattr_l(n, 1024, TCA_CN_FLOW_MAX_RATE,
+		addattr_l(n, 1024, TCA_COCOA_FLOW_MAX_RATE,
 			  &maxrate, sizeof(maxrate));
 	if (set_low_rate_threshold)
-		addattr_l(n, 1024, TCA_CN_LOW_RATE_THRESHOLD,
+		addattr_l(n, 1024, TCA_COCOA_LOW_RATE_THRESHOLD,
 			  &low_rate_threshold, sizeof(low_rate_threshold));
 	if (set_defrate)
-		addattr_l(n, 1024, TCA_CN_FLOW_DEFAULT_RATE,
+		addattr_l(n, 1024, TCA_COCOA_FLOW_DEFAULT_RATE,
 			  &defrate, sizeof(defrate));
 	if (set_refill_delay)
-		addattr_l(n, 1024, TCA_CN_FLOW_REFILL_DELAY,
+		addattr_l(n, 1024, TCA_COCOA_FLOW_REFILL_DELAY,
 			  &refill_delay, sizeof(refill_delay));
 	if (set_orphan_mask)
-		addattr_l(n, 1024, TCA_CN_ORPHAN_MASK,
+		addattr_l(n, 1024, TCA_COCOA_ORPHAN_MASK,
 			  &orphan_mask, sizeof(refill_delay));
 	if (set_ce_threshold)
-		addattr_l(n, 1024, TCA_CN_CE_THRESHOLD,
+		addattr_l(n, 1024, TCA_COCOA_CE_THRESHOLD,
 			  &ce_threshold, sizeof(ce_threshold));
 	if (set_guard_interval) {
 		fprintf(stderr, "Setting guard interval to %f\n", guard_interval);
-		addattr_l(n, 1024, TCA_CN_GUARD_INTERVAL,
+		addattr_l(n, 1024, TCA_COCOA_GUARD_INTERVAL,
 			  &guard_interval, sizeof(guard_interval));
 	}
 	if (set_max_increase) {
 		fprintf(stderr, "Setting max increase to %f\n", max_increase);
-		addattr_l(n, 1024, TCA_CN_MAX_INCREASE,
+		addattr_l(n, 1024, TCA_COCOA_MAX_INCREASE,
 			  &max_increase, sizeof(max_increase));
 	}
 	if (set_max_monitoring_interval) {
 		fprintf(stderr, "Setting max increase to %f\n", max_monitoring_interval);
-		addattr_l(n, 1024, TCA_CN_MAX_MONITORING_INTERVAL,
+		addattr_l(n, 1024, TCA_COCOA_MAX_MONITORING_INTERVAL,
 			  &max_monitoring_interval, sizeof(max_monitoring_interval));
 	}
 	addattr_nest_end(n, tail);
 
-	// fprintf(stderr, "TCA_CN_MAX in q_cn is %u\n", TCA_CN_MAX);
+	// fprintf(stderr, "TCA_COCOA_MAX in q_cocoa is %u\n", TCA_COCOA_MAX);
 
 	return 0;
 }
 
-static int cn_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
+static int cocoa_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 {
-	struct rtattr *tb[TCA_CN_MAX + 1];
+	struct rtattr *tb[TCA_COCOA_MAX + 1];
 	unsigned int plimit, flow_plimit;
 	unsigned int buckets_log;
 	int pacing;
@@ -318,86 +318,86 @@ static int cn_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	if (opt == NULL)
 		return 0;
 
-	parse_rtattr_nested(tb, TCA_CN_MAX, opt);
+	parse_rtattr_nested(tb, TCA_COCOA_MAX, opt);
 
-	if (tb[TCA_CN_PLIMIT] &&
-	    RTA_PAYLOAD(tb[TCA_CN_PLIMIT]) >= sizeof(__u32)) {
-		plimit = rta_getattr_u32(tb[TCA_CN_PLIMIT]);
+	if (tb[TCA_COCOA_PLIMIT] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_PLIMIT]) >= sizeof(__u32)) {
+		plimit = rta_getattr_u32(tb[TCA_COCOA_PLIMIT]);
 		fprintf(f, "limit %up ", plimit);
 	}
-	if (tb[TCA_CN_FLOW_PLIMIT] &&
-	    RTA_PAYLOAD(tb[TCA_CN_FLOW_PLIMIT]) >= sizeof(__u32)) {
-		flow_plimit = rta_getattr_u32(tb[TCA_CN_FLOW_PLIMIT]);
+	if (tb[TCA_COCOA_FLOW_PLIMIT] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_FLOW_PLIMIT]) >= sizeof(__u32)) {
+		flow_plimit = rta_getattr_u32(tb[TCA_COCOA_FLOW_PLIMIT]);
 		fprintf(f, "flow_limit %up ", flow_plimit);
 	}
-	if (tb[TCA_CN_BUCKETS_LOG] &&
-	    RTA_PAYLOAD(tb[TCA_CN_BUCKETS_LOG]) >= sizeof(__u32)) {
-		buckets_log = rta_getattr_u32(tb[TCA_CN_BUCKETS_LOG]);
+	if (tb[TCA_COCOA_BUCKETS_LOG] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_BUCKETS_LOG]) >= sizeof(__u32)) {
+		buckets_log = rta_getattr_u32(tb[TCA_COCOA_BUCKETS_LOG]);
 		fprintf(f, "buckets %u ", 1U << buckets_log);
 	}
-	if (tb[TCA_CN_ORPHAN_MASK] &&
-	    RTA_PAYLOAD(tb[TCA_CN_ORPHAN_MASK]) >= sizeof(__u32)) {
-		orphan_mask = rta_getattr_u32(tb[TCA_CN_ORPHAN_MASK]);
+	if (tb[TCA_COCOA_ORPHAN_MASK] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_ORPHAN_MASK]) >= sizeof(__u32)) {
+		orphan_mask = rta_getattr_u32(tb[TCA_COCOA_ORPHAN_MASK]);
 		fprintf(f, "orphan_mask %u ", orphan_mask);
 	}
-	if (tb[TCA_CN_RATE_ENABLE] &&
-	    RTA_PAYLOAD(tb[TCA_CN_RATE_ENABLE]) >= sizeof(int)) {
-		pacing = rta_getattr_u32(tb[TCA_CN_RATE_ENABLE]);
+	if (tb[TCA_COCOA_RATE_ENABLE] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_RATE_ENABLE]) >= sizeof(int)) {
+		pacing = rta_getattr_u32(tb[TCA_COCOA_RATE_ENABLE]);
 		if (pacing == 0)
 			fprintf(f, "nopacing ");
 	}
-	if (tb[TCA_CN_QUANTUM] &&
-	    RTA_PAYLOAD(tb[TCA_CN_QUANTUM]) >= sizeof(__u32)) {
-		quantum = rta_getattr_u32(tb[TCA_CN_QUANTUM]);
+	if (tb[TCA_COCOA_QUANTUM] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_QUANTUM]) >= sizeof(__u32)) {
+		quantum = rta_getattr_u32(tb[TCA_COCOA_QUANTUM]);
 		fprintf(f, "quantum %u ", quantum);
 	}
-	if (tb[TCA_CN_INITIAL_QUANTUM] &&
-	    RTA_PAYLOAD(tb[TCA_CN_INITIAL_QUANTUM]) >= sizeof(__u32)) {
-		quantum = rta_getattr_u32(tb[TCA_CN_INITIAL_QUANTUM]);
+	if (tb[TCA_COCOA_INITIAL_QUANTUM] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_INITIAL_QUANTUM]) >= sizeof(__u32)) {
+		quantum = rta_getattr_u32(tb[TCA_COCOA_INITIAL_QUANTUM]);
 		fprintf(f, "initial_quantum %u ", quantum);
 	}
-	if (tb[TCA_CN_FLOW_DEFAULT_RATE] &&
-	    RTA_PAYLOAD(tb[TCA_CN_FLOW_DEFAULT_RATE]) >= sizeof(__u32)) {
-		rate = rta_getattr_u32(tb[TCA_CN_FLOW_DEFAULT_RATE]);
+	if (tb[TCA_COCOA_FLOW_DEFAULT_RATE] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_FLOW_DEFAULT_RATE]) >= sizeof(__u32)) {
+		rate = rta_getattr_u32(tb[TCA_COCOA_FLOW_DEFAULT_RATE]);
 
 		if (rate != 0)
 			fprintf(f, "defrate %s ", sprint_rate(rate, b1));
 	}
-	if (tb[TCA_CN_LOW_RATE_THRESHOLD] &&
-	    RTA_PAYLOAD(tb[TCA_CN_LOW_RATE_THRESHOLD]) >= sizeof(__u32)) {
-		rate = rta_getattr_u32(tb[TCA_CN_LOW_RATE_THRESHOLD]);
+	if (tb[TCA_COCOA_LOW_RATE_THRESHOLD] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_LOW_RATE_THRESHOLD]) >= sizeof(__u32)) {
+		rate = rta_getattr_u32(tb[TCA_COCOA_LOW_RATE_THRESHOLD]);
 
 		if (rate != 0)
 			fprintf(f, "low_rate_threshold %s ", sprint_rate(rate, b1));
 	}
-	if (tb[TCA_CN_FLOW_REFILL_DELAY] &&
-	    RTA_PAYLOAD(tb[TCA_CN_FLOW_REFILL_DELAY]) >= sizeof(__u32)) {
-		refill_delay = rta_getattr_u32(tb[TCA_CN_FLOW_REFILL_DELAY]);
+	if (tb[TCA_COCOA_FLOW_REFILL_DELAY] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_FLOW_REFILL_DELAY]) >= sizeof(__u32)) {
+		refill_delay = rta_getattr_u32(tb[TCA_COCOA_FLOW_REFILL_DELAY]);
 		fprintf(f, "refill_delay %s ", sprint_time(refill_delay, b1));
 	}
-	if (tb[TCA_CN_CE_THRESHOLD] &&
-	    RTA_PAYLOAD(tb[TCA_CN_CE_THRESHOLD]) >= sizeof(__u32)) {
-		ce_threshold = rta_getattr_u32(tb[TCA_CN_CE_THRESHOLD]);
+	if (tb[TCA_COCOA_CE_THRESHOLD] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_CE_THRESHOLD]) >= sizeof(__u32)) {
+		ce_threshold = rta_getattr_u32(tb[TCA_COCOA_CE_THRESHOLD]);
 		if (ce_threshold != ~0U)
 			fprintf(f, "ce_threshold %s ", sprint_time(ce_threshold, b1));
 	}
-	if (tb[TCA_CN_GUARD_INTERVAL] &&
-	    RTA_PAYLOAD(tb[TCA_CN_GUARD_INTERVAL]) >= sizeof(__u64)) {
-		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_CN_GUARD_INTERVAL]);
+	if (tb[TCA_COCOA_GUARD_INTERVAL] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_GUARD_INTERVAL]) >= sizeof(__u64)) {
+		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_COCOA_GUARD_INTERVAL]);
 		guard_interval = *((double*) &unsigned_integer);
 		if (guard_interval != ~0U)
 			fprintf(f, "guard_interval %f ", guard_interval);
 	}
-	if (tb[TCA_CN_MAX_INCREASE] &&
-	    RTA_PAYLOAD(tb[TCA_CN_MAX_INCREASE]) >= sizeof(__u64)) {
-		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_CN_MAX_INCREASE]);
+	if (tb[TCA_COCOA_MAX_INCREASE] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_MAX_INCREASE]) >= sizeof(__u64)) {
+		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_COCOA_MAX_INCREASE]);
 		max_increase = *((double*) &unsigned_integer);
 		if (max_increase != ~0U)
 			fprintf(f, "max_increase %f ", max_increase);
 	}
-	if (tb[TCA_CN_MAX_MONITORING_INTERVAL] &&
-	    RTA_PAYLOAD(tb[TCA_CN_MAX_MONITORING_INTERVAL]) >= sizeof(__u64)) {
-		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_CN_MAX_MONITORING_INTERVAL]);
+	if (tb[TCA_COCOA_MAX_MONITORING_INTERVAL] &&
+	    RTA_PAYLOAD(tb[TCA_COCOA_MAX_MONITORING_INTERVAL]) >= sizeof(__u64)) {
+		uint64_t unsigned_integer = rta_getattr_u64(tb[TCA_COCOA_MAX_MONITORING_INTERVAL]);
 		max_monitoring_interval = *((double*) &unsigned_integer);
 		if (max_monitoring_interval != ~0U)
 			fprintf(f, "max_monitoring_interval %f ", max_monitoring_interval);
@@ -406,7 +406,7 @@ static int cn_print_opt(struct qdisc_util *qu, FILE *f, struct rtattr *opt)
 	return 0;
 }
 
-static int cn_print_xstats(struct qdisc_util *qu, FILE *f,
+static int cocoa_print_xstats(struct qdisc_util *qu, FILE *f,
 			   struct rtattr *xstats)
 {
 	struct tc_fq_qd_stats *st, _st;
@@ -449,9 +449,9 @@ static int cn_print_xstats(struct qdisc_util *qu, FILE *f,
 	return 0;
 }
 
-struct qdisc_util cn_qdisc_util = {
-	.id		= "cn",
-	.parse_qopt	= cn_parse_opt,
-	.print_qopt	= cn_print_opt,
-	.print_xstats	= cn_print_xstats,
+struct qdisc_util cocoa_qdisc_util = {
+	.id		= "cocoa",
+	.parse_qopt	= cocoa_parse_opt,
+	.print_qopt	= cocoa_print_opt,
+	.print_xstats	= cocoa_print_xstats,
 };

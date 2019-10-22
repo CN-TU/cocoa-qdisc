@@ -1,5 +1,5 @@
 /*
- * net/sched/sch_cn.c Fair Queue Packet Scheduler (per flow pacing)
+ * net/sched/sch_cocoa.c Fair Queue Packet Scheduler (per flow pacing)
  *
  *  Copyright (C) 2013-2015 Eric Dumazet <edumazet@google.com>
  *
@@ -58,7 +58,7 @@
 #include <linux/timekeeping.h>
 
 // Added by max
-#include "iproute2/tc/cn_opts.h"
+#include "iproute2/tc/cocoa_opts.h"
 
 #define NANOSECONDS_IN_ONE_SECOND 1000000000
 
@@ -87,13 +87,13 @@ struct five_tuple {
 /*
  * Per flow structure, dynamically allocated
  */
-struct cn_flow {
+struct cocoa_flow {
 	struct sk_buff	*head;		/* list of skbs for this flow : first skb */
 	union {
 		struct sk_buff *tail;	/* last skb in the list */
 		unsigned long  age;	/* jiffies when flow was emptied, for gc */
 	};
-	struct rb_node	cn_node;	/* anchor in cn_root[] trees */
+	struct rb_node	cocoa_node;	/* anchor in cocoa_root[] trees */
 	struct sock	*sk;
 	int		qlen;		/* number of packets in flow queue */
 
@@ -101,7 +101,7 @@ struct cn_flow {
 
 	int		credit;
 	u32		socket_hash;	/* sk_hash */
-	struct cn_flow *next;		/* next pointer in RR lists, or &detached */
+	struct cocoa_flow *next;		/* next pointer in RR lists, or &detached */
 	struct rb_node  rate_node;	/* anchor in q->delayed tree */
 	u64		time_next_packet;
 
@@ -117,21 +117,21 @@ struct cn_flow {
 	u64 enlarge;
 };
 
-struct cn_flow_head {
-	struct cn_flow *first;
-	struct cn_flow *last;
+struct cocoa_flow_head {
+	struct cocoa_flow *first;
+	struct cocoa_flow *last;
 };
 
-struct cn_sched_data {
-	struct cn_flow_head new_flows;
+struct cocoa_sched_data {
+	struct cocoa_flow_head new_flows;
 
-	struct cn_flow_head old_flows;
+	struct cocoa_flow_head old_flows;
 
 	struct rb_root	delayed;	/* for rate limited flows */
 	u64		time_next_delayed_flow;
 	unsigned long	unthrottle_latency_ns;
 
-	struct cn_flow	internal;	/* for non classified or high prio packets */
+	struct cocoa_flow	internal;	/* for non classified or high prio packets */
 	u32		quantum;
 	u32		initial_quantum;
 	u32		flow_refill_delay;
@@ -139,9 +139,9 @@ struct cn_sched_data {
 	u32		flow_plimit;	/* max packets per flow */
 	u32		orphan_mask;	/* mask for orphaned skb */
 	u32		low_rate_threshold;
-	struct rb_root	*cn_root;
+	struct rb_root	*cocoa_root;
 	u8		rate_enable;
-	u8		cn_trees_log;
+	u8		cocoa_trees_log;
 
 	u32		flows;
 	u32		inactive_flows;
@@ -208,25 +208,25 @@ static struct five_tuple get_five_tuple_from_skb(struct sk_buff *skb) {
 }
 
 /* special value to mark a detached flow (not on old/new list) */
-static struct cn_flow detached, throttled;
+static struct cocoa_flow detached, throttled;
 
-static void cn_flow_set_detached(struct cn_flow *f)
+static void cocoa_flow_set_detached(struct cocoa_flow *f)
 {
 	f->next = &detached;
 	f->age = jiffies;
 }
 
-static bool cn_flow_is_detached(const struct cn_flow *f)
+static bool cocoa_flow_is_detached(const struct cocoa_flow *f)
 {
 	return f->next == &detached;
 }
 
-static bool cn_flow_is_throttled(const struct cn_flow *f)
+static bool cocoa_flow_is_throttled(const struct cocoa_flow *f)
 {
 	return f->next == &throttled;
 }
 
-static void cn_flow_add_tail(struct cn_flow_head *head, struct cn_flow *flow)
+static void cocoa_flow_add_tail(struct cocoa_flow_head *head, struct cocoa_flow *flow)
 {
 	if (head->first)
 		head->last->next = flow;
@@ -236,22 +236,22 @@ static void cn_flow_add_tail(struct cn_flow_head *head, struct cn_flow *flow)
 	flow->next = NULL;
 }
 
-static void cn_flow_unset_throttled(struct cn_sched_data *q, struct cn_flow *f)
+static void cocoa_flow_unset_throttled(struct cocoa_sched_data *q, struct cocoa_flow *f)
 {
 	rb_erase(&f->rate_node, &q->delayed);
 	q->throttled_flows--;
-	cn_flow_add_tail(&q->old_flows, f);
+	cocoa_flow_add_tail(&q->old_flows, f);
 }
 
-static void cn_flow_set_throttled(struct cn_sched_data *q, struct cn_flow *f)
+static void cocoa_flow_set_throttled(struct cocoa_sched_data *q, struct cocoa_flow *f)
 {
 	struct rb_node **p = &q->delayed.rb_node, *parent = NULL;
 
 	while (*p) {
-		struct cn_flow *aux;
+		struct cocoa_flow *aux;
 
 		parent = *p;
-		aux = rb_entry(parent, struct cn_flow, rate_node);
+		aux = rb_entry(parent, struct cocoa_flow, rate_node);
 		if (f->time_next_packet >= aux->time_next_packet)
 			p = &parent->rb_right;
 		else
@@ -266,44 +266,44 @@ static void cn_flow_set_throttled(struct cn_sched_data *q, struct cn_flow *f)
 	if (q->time_next_delayed_flow > f->time_next_packet)
 		q->time_next_delayed_flow = f->time_next_packet;
 }
-static struct kmem_cache *cn_flow_cachep __read_mostly;
+static struct kmem_cache *cocoa_flow_cachep __read_mostly;
 
 // Flows time out after 10 seconds
 #define FLOW_TIMEOUT 10
 
 /* limit number of collected flows per round */
-#define CN_GC_MAX 8
+#define COCOA_GC_MAX 8
 // Changed by Max. Shouldn't be needed though because only when there are sufficient
 // flows GC kicks in
-// #define CN_GC_AGE (3*HZ)
-#define CN_GC_AGE (FLOW_TIMEOUT*HZ)
+// #define COCOA_GC_AGE (3*HZ)
+#define COCOA_GC_AGE (FLOW_TIMEOUT*HZ)
 
-static bool cn_gc_candidate(const struct cn_flow *f)
+static bool cocoa_gc_candidate(const struct cocoa_flow *f)
 {
-	return cn_flow_is_detached(f) &&
-				 time_after(jiffies, f->age + CN_GC_AGE);
+	return cocoa_flow_is_detached(f) &&
+				 time_after(jiffies, f->age + COCOA_GC_AGE);
 }
 
-static void cn_gc(struct cn_sched_data *q,
+static void cocoa_gc(struct cocoa_sched_data *q,
 			struct rb_root *root,
 			struct sock *sk)
 {
-	struct cn_flow *f, *tofree[CN_GC_MAX];
+	struct cocoa_flow *f, *tofree[COCOA_GC_MAX];
 	struct rb_node **p, *parent;
-	int fcnt = 0;
+	int fcocoat = 0;
 
 	p = &root->rb_node;
 	parent = NULL;
 	while (*p) {
 		parent = *p;
 
-		f = rb_entry(parent, struct cn_flow, cn_node);
+		f = rb_entry(parent, struct cocoa_flow, cocoa_node);
 		if (f->sk == sk)
 			break;
 
-		if (cn_gc_candidate(f)) {
-			tofree[fcnt++] = f;
-			if (fcnt == CN_GC_MAX)
+		if (cocoa_gc_candidate(f)) {
+			tofree[fcocoat++] = f;
+			if (fcocoat == COCOA_GC_MAX)
 				break;
 		}
 
@@ -313,26 +313,26 @@ static void cn_gc(struct cn_sched_data *q,
 			p = &parent->rb_left;
 	}
 
-	q->flows -= fcnt;
-	q->inactive_flows -= fcnt;
-	q->stat_gc_flows += fcnt;
-	while (fcnt) {
-		struct cn_flow *f = tofree[--fcnt];
-		trace_printk("sch_cn: At %llu, Garbage collected %u flows!\n", seconds_from_ns(f->flow_start_ns), (u32) fcnt);
+	q->flows -= fcocoat;
+	q->inactive_flows -= fcocoat;
+	q->stat_gc_flows += fcocoat;
+	while (fcocoat) {
+		struct cocoa_flow *f = tofree[--fcocoat];
+		trace_printk("sch_cocoa: At %llu, Garbage collected %u flows!\n", seconds_from_ns(f->flow_start_ns), (u32) fcocoat);
 
-		rb_erase(&f->cn_node, root);
-		kmem_cache_free(cn_flow_cachep, f);
+		rb_erase(&f->cocoa_node, root);
+		kmem_cache_free(cocoa_flow_cachep, f);
 	}
 }
 
-static void cn_initialize_interval(struct interval_info *interval) {
+static void cocoa_initialize_interval(struct interval_info *interval) {
 	// u64 current_ns = ktime_get_ns();
 	// f->current_interval.start_ns = current_ns;
 	// f->current_interval.end_ns = current_ns;
 	// f->current_interval.idle_ns = 0;
 	// f->current_interval.min_queue_length = ULONG_MAX;
 	// f->current_interval.packets_transmitted = 0;
-	// cn_copy_longest_interval_if_needed(f);
+	// cocoa_copy_longest_interval_if_needed(f);
 	u64 current_ns = ktime_get_ns();
 	interval->start_ns = current_ns;
 	interval->end_ns = current_ns;
@@ -342,32 +342,32 @@ static void cn_initialize_interval(struct interval_info *interval) {
 }
 
 // Created by Max
-static void cn_copy_longest_interval_if_needed(struct cn_flow *f) {
+static void cocoa_copy_longest_interval_if_needed(struct cocoa_flow *f) {
 	if ((f->current_interval.end_ns - f->current_interval.start_ns) >= (f->longest_interval.end_ns - f->longest_interval.start_ns)) {
 		f->longest_interval = f->current_interval;
 	}
 }
 
-static void cn_initialize_monitoring_interval(struct cn_flow *f) {
+static void cocoa_initialize_monitoring_interval(struct cocoa_flow *f) {
 	u64 current_ns = ktime_get_ns();
 	f->monitoring_period_start_ns = current_ns;
 	f->monitoring_period_end_ns = current_ns;
 	f->became_idle_ns = 0;
 	f->idle = false;
 	if (f->enlarge) {
-		trace_printk("sch_cn: At %llu, f->enlarge is true!!! This shouldn't happen\n", seconds_from_ns(f->flow_start_ns));
+		trace_printk("sch_cocoa: At %llu, f->enlarge is true!!! This shouldn't happen\n", seconds_from_ns(f->flow_start_ns));
 	}
 
 	// In theory this is useless...
 	f->enlarge = false;
 }
 
-static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
+static struct cocoa_flow *cocoa_classify(struct sk_buff *skb, struct cocoa_sched_data *q)
 {
 	struct rb_node **p, *parent;
 	struct sock *sk = skb->sk;
 	struct rb_root *root;
-	struct cn_flow *f;
+	struct cocoa_flow *f;
 	struct five_tuple ft;
 
 	/* warning: no starvation prevention... */
@@ -393,18 +393,18 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 		skb_orphan(skb);
 	}
 
-	root = &q->cn_root[hash_ptr(sk, q->cn_trees_log)];
+	root = &q->cocoa_root[hash_ptr(sk, q->cocoa_trees_log)];
 
-	if (q->flows >= (2U << q->cn_trees_log) &&
+	if (q->flows >= (2U << q->cocoa_trees_log) &&
 			q->inactive_flows > q->flows/2)
-		cn_gc(q, root, sk);
+		cocoa_gc(q, root, sk);
 
 	p = &root->rb_node;
 	parent = NULL;
 	while (*p) {
 		parent = *p;
 
-		f = rb_entry(parent, struct cn_flow, cn_node);
+		f = rb_entry(parent, struct cocoa_flow, cocoa_node);
 		if (f->sk == sk) {
 			/* socket might have been reallocated, so check
 			 * if its sk_hash is the same.
@@ -415,8 +415,8 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 						 f->socket_hash != sk->sk_hash)) {
 				f->credit = q->initial_quantum;
 				f->socket_hash = sk->sk_hash;
-				if (cn_flow_is_throttled(f))
-					cn_flow_unset_throttled(q, f);
+				if (cocoa_flow_is_throttled(f))
+					cocoa_flow_unset_throttled(q, f);
 				f->time_next_packet = 0ULL;
 			}
 			return f;
@@ -427,19 +427,19 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 			p = &parent->rb_left;
 	}
 
-	f = kmem_cache_zalloc(cn_flow_cachep, GFP_ATOMIC | __GFP_NOWARN);
+	f = kmem_cache_zalloc(cocoa_flow_cachep, GFP_ATOMIC | __GFP_NOWARN);
 	if (unlikely(!f)) {
 		q->stat_allocation_errors++;
 		return &q->internal;
 	}
-	cn_flow_set_detached(f);
+	cocoa_flow_set_detached(f);
 	f->sk = sk;
 	if (skb->sk)
 		f->socket_hash = sk->sk_hash;
 	f->credit = q->initial_quantum;
 
-	rb_link_node(&f->cn_node, parent, p);
-	rb_insert_color(&f->cn_node, root);
+	rb_link_node(&f->cocoa_node, parent, p);
+	rb_insert_color(&f->cocoa_node, root);
 
 	q->flows++;
 	q->inactive_flows++;
@@ -450,12 +450,12 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 	if (ft.transport_protocol == 6) {
 		struct ipv4_address src_ip = get_ip(ft.src_ip);
 		struct ipv4_address dst_ip = get_ip(ft.dst_ip);
-		trace_printk("sch_cn: At %llu, got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", seconds_from_ns(f->flow_start_ns), src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
+		trace_printk("sch_cocoa: At %llu, got new flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", seconds_from_ns(f->flow_start_ns), src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
 	}
 
 	f->enlarge = false;
-	cn_initialize_monitoring_interval(f);
-	cn_initialize_interval(&(f->current_interval));
+	cocoa_initialize_monitoring_interval(f);
+	cocoa_initialize_interval(&(f->current_interval));
 	f->longest_interval = f->current_interval;
 	f->flow_max_qlen = (u32) q->flow_plimit;
 	return f;
@@ -463,7 +463,7 @@ static struct cn_flow *cn_classify(struct sk_buff *skb, struct cn_sched_data *q)
 
 
 /* remove one skb from head of flow queue */
-static struct sk_buff *cn_dequeue_head(struct Qdisc *sch, struct cn_flow *flow)
+static struct sk_buff *cocoa_dequeue_head(struct Qdisc *sch, struct cocoa_flow *flow)
 {
 	struct sk_buff *skb = flow->head;
 
@@ -503,7 +503,7 @@ static bool skb_is_retransmit(struct sk_buff *skb)
  *         [ normal pkt 3]
  * tail->  [ normal pkt 4]
  */
-static void flow_queue_add(struct cn_flow *flow, struct sk_buff *skb)
+static void flow_queue_add(struct cocoa_flow *flow, struct sk_buff *skb)
 {
 	struct sk_buff *prev, *head = flow->head;
 
@@ -541,7 +541,7 @@ static void flow_queue_add(struct cn_flow *flow, struct sk_buff *skb)
 	}
 }
 
-static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struct sk_buff **to_free) {
+static void cocoa_drop_packets_from_end(struct cocoa_flow *f, struct Qdisc *sch, struct sk_buff **to_free) {
 	u64 number = f->longest_interval.min_queue_length;
 	size_t i;
 	u64 good_ones = f->qlen - number - 1;
@@ -566,10 +566,10 @@ static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struc
 	sch->q.qlen -= number;
 	f->flow_max_qlen -= number;
 	if (f->ft.transport_protocol == 6) {
-		trace_printk("sch_cn: 	At %llu, Dropped %llu packets, drop_counter=%lu!\n", seconds_from_ns(f->flow_start_ns), number, drop_counter);
+		trace_printk("sch_cocoa: 	At %llu, Dropped %llu packets, drop_counter=%lu!\n", seconds_from_ns(f->flow_start_ns), number, drop_counter);
 	}
 	if (f->flow_max_qlen <= 0) {
-		trace_printk("sch_cn: At %llu, Oh no, f->flow_max_qlen=%d\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
+		trace_printk("sch_cocoa: At %llu, Oh no, f->flow_max_qlen=%d\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
 	}
 	current_skb = f->head;
 	while (current_skb != NULL) {
@@ -577,33 +577,33 @@ static void cn_drop_packets_from_end(struct cn_flow *f, struct Qdisc *sch, struc
 		current_skb = current_skb->next;
 	}
 	if (f->flow_max_qlen != counter) {
-		trace_printk("sch_cn: At %llu, Oh no, f->flow_max_qlen=%d!=counter=%lu\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen, counter);
+		trace_printk("sch_cocoa: At %llu, Oh no, f->flow_max_qlen=%d!=counter=%lu\n", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen, counter);
 }
 }
 
-static void cn_compute_and_set_new_monitoring_interval(struct cn_sched_data *q, struct cn_flow *f) {
+static void cocoa_compute_and_set_new_monitoring_interval(struct cocoa_sched_data *q, struct cocoa_flow *f) {
 	kernel_fpu_begin();
 	f->monitoring_period_end_ns = ktime_get_ns() + min(q->max_monitoring_interval, (u64) (((double) (f->longest_interval.end_ns - f->longest_interval.start_ns)) * (q->guard_interval)));
 	kernel_fpu_end();
 }
 
-static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+static int cocoa_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 					struct sk_buff **to_free)
 {
-	struct cn_sched_data *q = qdisc_priv(sch);
-	struct cn_flow *f;
+	struct cocoa_sched_data *q = qdisc_priv(sch);
+	struct cocoa_flow *f;
 	struct five_tuple ft;
 
 	if (unlikely(sch->q.qlen >= sch->limit))
 		return qdisc_drop(skb, sch, to_free);
 
-	f = cn_classify(skb, q);
+	f = cocoa_classify(skb, q);
 	if (unlikely(f->qlen >= f->flow_max_qlen && f != &q->internal)) {
 		ft = f->ft;
 		if (ft.transport_protocol == 6) {
 			struct ipv4_address src_ip = get_ip(ft.src_ip);
 			struct ipv4_address dst_ip = get_ip(ft.dst_ip);
-			trace_printk("sch_cn: At %llu, Queue (%d, max %d packets) full for flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", seconds_from_ns(f->flow_start_ns), f->qlen, f->flow_max_qlen, src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
+			trace_printk("sch_cocoa: At %llu, Queue (%d, max %d packets) full for flow: src_ip=%s, dst_ip=%s, proto=%u, src_port=%u, dst_port=%u!\n", seconds_from_ns(f->flow_start_ns), f->qlen, f->flow_max_qlen, src_ip.bytes, dst_ip.bytes, (u32) ft.transport_protocol, (u32) ft.src_port, (u32) ft.dst_port);
 		}
 		// FIXME: This stat should probably be moved?
 		q->stat_flows_plimit++;
@@ -614,7 +614,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 			idle_interval = f->current_interval.idle_ns;
 			active_interval = (ktime_get_ns() - f->current_interval.start_ns) - idle_interval;
 			if (ft.transport_protocol == 6) {
-				trace_printk("sch_cn: 	At %llu, Got idle ns: %llu, active ns: %llu, packets transmitted: %llu; enlarging buffer!\n", seconds_from_ns(f->flow_start_ns), idle_interval, active_interval, f->current_interval.packets_transmitted);
+				trace_printk("sch_cocoa: 	At %llu, Got idle ns: %llu, active ns: %llu, packets transmitted: %llu; enlarging buffer!\n", seconds_from_ns(f->flow_start_ns), idle_interval, active_interval, f->current_interval.packets_transmitted);
 			}
 			f->enlarge = true;
 			kernel_fpu_begin();
@@ -622,45 +622,45 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 			f->flow_max_qlen = min(f->flow_max_qlen + ((int) (((double) f->current_interval.packets_transmitted)/active_interval*idle_interval)), (int) (((f->flow_max_qlen)*(q->max_increase))));
 			kernel_fpu_end();
 			if (ft.transport_protocol == 6) {
-				trace_printk("sch_cn: 	At %llu, New queue length is %d!\n!", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
+				trace_printk("sch_cocoa: 	At %llu, New queue length is %d!\n!", seconds_from_ns(f->flow_start_ns), f->flow_max_qlen);
 			}
 		} else if (f->monitoring_period_start_ns==f->monitoring_period_end_ns || f->enlarge) {
 			if (ft.transport_protocol == 6) {
-				trace_printk("sch_cn: 	At %llu, Simply starting a new monitoring interval!\n", seconds_from_ns(f->flow_start_ns));
+				trace_printk("sch_cocoa: 	At %llu, Simply starting a new monitoring interval!\n", seconds_from_ns(f->flow_start_ns));
 			}
 			f->current_interval.end_ns = ktime_get_ns();
 			// f->longest_interval = f->current_interval;
-			cn_copy_longest_interval_if_needed(f);
+			cocoa_copy_longest_interval_if_needed(f);
 			if (f->enlarge) {
 				f->longest_interval = f->current_interval;
 			}
 			f->enlarge = false;
-			cn_initialize_monitoring_interval(f);
-			cn_compute_and_set_new_monitoring_interval(q, f);
-			cn_initialize_interval(&(f->current_interval));
+			cocoa_initialize_monitoring_interval(f);
+			cocoa_compute_and_set_new_monitoring_interval(q, f);
+			cocoa_initialize_interval(&(f->current_interval));
 			f->longest_interval = f->current_interval;
 			return qdisc_drop(skb, sch, to_free);
 		} else if (ktime_get_ns() > f->monitoring_period_end_ns) {
 			f->current_interval.end_ns = ktime_get_ns();
-			cn_copy_longest_interval_if_needed(f);
+			cocoa_copy_longest_interval_if_needed(f);
 			if (f->longest_interval.min_queue_length > 0) {
-				cn_drop_packets_from_end(f, sch, to_free);
+				cocoa_drop_packets_from_end(f, sch, to_free);
 			}
 			if (ft.transport_protocol == 6) {
-				trace_printk("sch_cn: 	At %llu, Monitoring period is over and no idle ns! New queue length is %d, max is %d!\n", seconds_from_ns(f->flow_start_ns), f->qlen, f->flow_max_qlen);
+				trace_printk("sch_cocoa: 	At %llu, Monitoring period is over and no idle ns! New queue length is %d, max is %d!\n", seconds_from_ns(f->flow_start_ns), f->qlen, f->flow_max_qlen);
 			}
-			cn_initialize_monitoring_interval(f);
-			cn_compute_and_set_new_monitoring_interval(q, f);
-			cn_initialize_interval(&(f->current_interval));
+			cocoa_initialize_monitoring_interval(f);
+			cocoa_compute_and_set_new_monitoring_interval(q, f);
+			cocoa_initialize_interval(&(f->current_interval));
 			f->longest_interval = f->current_interval;
 			return qdisc_drop(skb, sch, to_free);
 		} else {
 			if (ft.transport_protocol == 6) {
-				trace_printk("sch_cn: 	At %llu, Packet lost during monitoring period... Business as usual!\n", seconds_from_ns(f->flow_start_ns));
+				trace_printk("sch_cocoa: 	At %llu, Packet lost during monitoring period... Business as usual!\n", seconds_from_ns(f->flow_start_ns));
 			}
 			f->current_interval.end_ns = ktime_get_ns();
-			cn_copy_longest_interval_if_needed(f);
-			cn_initialize_interval(&(f->current_interval));
+			cocoa_copy_longest_interval_if_needed(f);
+			cocoa_initialize_interval(&(f->current_interval));
 			return qdisc_drop(skb, sch, to_free);
 		}
 	}
@@ -675,10 +675,10 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 	if (skb_is_retransmit(skb))
 		q->stat_tcp_retrans++;
 	qdisc_qstats_backlog_inc(sch, skb);
-	if (cn_flow_is_detached(f)) {
+	if (cocoa_flow_is_detached(f)) {
 		struct sock *sk = skb->sk;
 
-		cn_flow_add_tail(&q->new_flows, f);
+		cocoa_flow_add_tail(&q->new_flows, f);
 		if (time_after(jiffies, f->age + q->flow_refill_delay))
 			f->credit = max_t(u32, f->credit, q->quantum);
 		if (sk && q->rate_enable) {
@@ -703,7 +703,7 @@ static int cn_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 	return NET_XMIT_SUCCESS;
 }
 
-static void cn_check_throttled(struct cn_sched_data *q, u64 now)
+static void cocoa_check_throttled(struct cocoa_sched_data *q, u64 now)
 {
 	unsigned long sample;
 	struct rb_node *p;
@@ -720,29 +720,29 @@ static void cn_check_throttled(struct cn_sched_data *q, u64 now)
 
 	q->time_next_delayed_flow = ~0ULL;
 	while ((p = rb_first(&q->delayed)) != NULL) {
-		struct cn_flow *f = rb_entry(p, struct cn_flow, rate_node);
+		struct cocoa_flow *f = rb_entry(p, struct cocoa_flow, rate_node);
 
 		if (f->time_next_packet > now) {
 			q->time_next_delayed_flow = f->time_next_packet;
 			break;
 		}
-		cn_flow_unset_throttled(q, f);
+		cocoa_flow_unset_throttled(q, f);
 	}
 }
 
-static struct sk_buff *cn_dequeue(struct Qdisc *sch)
+static struct sk_buff *cocoa_dequeue(struct Qdisc *sch)
 {
-	struct cn_sched_data *q = qdisc_priv(sch);
+	struct cocoa_sched_data *q = qdisc_priv(sch);
 	u64 now = ktime_get_ns();
-	struct cn_flow_head *head;
+	struct cocoa_flow_head *head;
 	struct sk_buff *skb;
-	struct cn_flow *f;
+	struct cocoa_flow *f;
 	u32 rate, plen;
 
-	skb = cn_dequeue_head(sch, &q->internal);
+	skb = cocoa_dequeue_head(sch, &q->internal);
 	if (skb)
 		goto out;
-	cn_check_throttled(q, now);
+	cocoa_check_throttled(q, now);
 begin:
 	head = &q->new_flows;
 	if (!head->first) {
@@ -759,7 +759,7 @@ begin:
 	if (f->credit <= 0) {
 		f->credit += q->quantum;
 		head->first = f->next;
-		cn_flow_add_tail(&q->old_flows, f);
+		cocoa_flow_add_tail(&q->old_flows, f);
 		goto begin;
 	}
 
@@ -767,18 +767,18 @@ begin:
 	if (unlikely(skb && now < f->time_next_packet &&
 				 !skb_is_tcp_pure_ack(skb))) {
 		head->first = f->next;
-		cn_flow_set_throttled(q, f);
+		cocoa_flow_set_throttled(q, f);
 		goto begin;
 	}
 
-	skb = cn_dequeue_head(sch, f);
+	skb = cocoa_dequeue_head(sch, f);
 	if (!skb) {
 		head->first = f->next;
 		/* force a pass through old_flows to prevent starvation */
 		if ((head == &q->new_flows) && q->old_flows.first) {
-			cn_flow_add_tail(&q->old_flows, f);
+			cocoa_flow_add_tail(&q->old_flows, f);
 		} else {
-			cn_flow_set_detached(f);
+			cocoa_flow_set_detached(f);
 			q->inactive_flows++;
 		}
 		goto begin;
@@ -831,38 +831,38 @@ out:
 	return skb;
 }
 
-static void cn_flow_purge(struct cn_flow *flow)
+static void cocoa_flow_purge(struct cocoa_flow *flow)
 {
 	rtnl_kfree_skbs(flow->head, flow->tail);
 	flow->head = NULL;
 	flow->qlen = 0;
 }
 
-static void cn_reset(struct Qdisc *sch)
+static void cocoa_reset(struct Qdisc *sch)
 {
-	struct cn_sched_data *q = qdisc_priv(sch);
+	struct cocoa_sched_data *q = qdisc_priv(sch);
 	struct rb_root *root;
 	struct rb_node *p;
-	struct cn_flow *f;
+	struct cocoa_flow *f;
 	unsigned int idx;
 
 	sch->q.qlen = 0;
 	sch->qstats.backlog = 0;
 
-	cn_flow_purge(&q->internal);
+	cocoa_flow_purge(&q->internal);
 
-	if (!q->cn_root)
+	if (!q->cocoa_root)
 		return;
 
-	for (idx = 0; idx < (1U << q->cn_trees_log); idx++) {
-		root = &q->cn_root[idx];
+	for (idx = 0; idx < (1U << q->cocoa_trees_log); idx++) {
+		root = &q->cocoa_root[idx];
 		while ((p = rb_first(root)) != NULL) {
-			f = rb_entry(p, struct cn_flow, cn_node);
+			f = rb_entry(p, struct cocoa_flow, cocoa_node);
 			rb_erase(p, root);
 
-			cn_flow_purge(f);
+			cocoa_flow_purge(f);
 
-			kmem_cache_free(cn_flow_cachep, f);
+			kmem_cache_free(cocoa_flow_cachep, f);
 		}
 	}
 	q->new_flows.first	= NULL;
@@ -873,24 +873,24 @@ static void cn_reset(struct Qdisc *sch)
 	q->throttled_flows	= 0;
 }
 
-static void cn_rehash(struct cn_sched_data *q,
+static void cocoa_rehash(struct cocoa_sched_data *q,
 					struct rb_root *old_array, u32 old_log,
 					struct rb_root *new_array, u32 new_log)
 {
 	struct rb_node *op, **np, *parent;
 	struct rb_root *oroot, *nroot;
-	struct cn_flow *of, *nf;
-	int fcnt = 0;
+	struct cocoa_flow *of, *nf;
+	int fcocoat = 0;
 	u32 idx;
 
 	for (idx = 0; idx < (1U << old_log); idx++) {
 		oroot = &old_array[idx];
 		while ((op = rb_first(oroot)) != NULL) {
 			rb_erase(op, oroot);
-			of = rb_entry(op, struct cn_flow, cn_node);
-			if (cn_gc_candidate(of)) {
-				fcnt++;
-				kmem_cache_free(cn_flow_cachep, of);
+			of = rb_entry(op, struct cocoa_flow, cocoa_node);
+			if (cocoa_gc_candidate(of)) {
+				fcocoat++;
+				kmem_cache_free(cocoa_flow_cachep, of);
 				continue;
 			}
 			nroot = &new_array[hash_ptr(of->sk, new_log)];
@@ -900,7 +900,7 @@ static void cn_rehash(struct cn_sched_data *q,
 			while (*np) {
 				parent = *np;
 
-				nf = rb_entry(parent, struct cn_flow, cn_node);
+				nf = rb_entry(parent, struct cocoa_flow, cocoa_node);
 				BUG_ON(nf->sk == of->sk);
 
 				if (nf->sk > of->sk)
@@ -909,28 +909,28 @@ static void cn_rehash(struct cn_sched_data *q,
 					np = &parent->rb_left;
 			}
 
-			rb_link_node(&of->cn_node, parent, np);
-			rb_insert_color(&of->cn_node, nroot);
+			rb_link_node(&of->cocoa_node, parent, np);
+			rb_insert_color(&of->cocoa_node, nroot);
 		}
 	}
-	q->flows -= fcnt;
-	q->inactive_flows -= fcnt;
-	q->stat_gc_flows += fcnt;
+	q->flows -= fcocoat;
+	q->inactive_flows -= fcocoat;
+	q->stat_gc_flows += fcocoat;
 }
 
-static void cn_free(void *addr)
+static void cocoa_free(void *addr)
 {
 	kvfree(addr);
 }
 
-static int cn_resize(struct Qdisc *sch, u32 log)
+static int cocoa_resize(struct Qdisc *sch, u32 log)
 {
-	struct cn_sched_data *q = qdisc_priv(sch);
+	struct cocoa_sched_data *q = qdisc_priv(sch);
 	struct rb_root *array;
-	void *old_cn_root;
+	void *old_cocoa_root;
 	u32 idx;
 
-	if (q->cn_root && log == q->cn_trees_log)
+	if (q->cocoa_root && log == q->cocoa_trees_log)
 		return 0;
 
 	/* If XPS was setup, we can allocate memory on right NUMA node */
@@ -944,110 +944,110 @@ static int cn_resize(struct Qdisc *sch, u32 log)
 
 	sch_tree_lock(sch);
 
-	old_cn_root = q->cn_root;
-	if (old_cn_root)
-		cn_rehash(q, old_cn_root, q->cn_trees_log, array, log);
+	old_cocoa_root = q->cocoa_root;
+	if (old_cocoa_root)
+		cocoa_rehash(q, old_cocoa_root, q->cocoa_trees_log, array, log);
 
-	q->cn_root = array;
-	q->cn_trees_log = log;
+	q->cocoa_root = array;
+	q->cocoa_trees_log = log;
 
 	sch_tree_unlock(sch);
 
-	cn_free(old_cn_root);
+	cocoa_free(old_cocoa_root);
 
 	return 0;
 }
 
-static const struct nla_policy cn_policy[TCA_CN_MAX + 1] = {
-	[TCA_CN_PLIMIT]			= { .type = NLA_U32 },
-	[TCA_CN_FLOW_PLIMIT]		= { .type = NLA_U32 },
-	[TCA_CN_QUANTUM]		= { .type = NLA_U32 },
-	[TCA_CN_INITIAL_QUANTUM]	= { .type = NLA_U32 },
-	[TCA_CN_RATE_ENABLE]		= { .type = NLA_U32 },
-	[TCA_CN_FLOW_DEFAULT_RATE]	= { .type = NLA_U32 },
-	[TCA_CN_FLOW_MAX_RATE]		= { .type = NLA_U32 },
-	[TCA_CN_BUCKETS_LOG]		= { .type = NLA_U32 },
-	[TCA_CN_FLOW_REFILL_DELAY]	= { .type = NLA_U32 },
-	[TCA_CN_LOW_RATE_THRESHOLD]	= { .type = NLA_U32 },
-	[TCA_CN_CE_THRESHOLD]	= { .type = NLA_U64 },
-	[TCA_CN_GUARD_INTERVAL]	= { .type = NLA_U64 },
-	[TCA_CN_MAX_INCREASE]	= { .type = NLA_U64 },
-	[TCA_CN_MAX_MONITORING_INTERVAL]	= { .type = NLA_U64 },
+static const struct nla_policy cocoa_policy[TCA_COCOA_MAX + 1] = {
+	[TCA_COCOA_PLIMIT]			= { .type = NLA_U32 },
+	[TCA_COCOA_FLOW_PLIMIT]		= { .type = NLA_U32 },
+	[TCA_COCOA_QUANTUM]		= { .type = NLA_U32 },
+	[TCA_COCOA_INITIAL_QUANTUM]	= { .type = NLA_U32 },
+	[TCA_COCOA_RATE_ENABLE]		= { .type = NLA_U32 },
+	[TCA_COCOA_FLOW_DEFAULT_RATE]	= { .type = NLA_U32 },
+	[TCA_COCOA_FLOW_MAX_RATE]		= { .type = NLA_U32 },
+	[TCA_COCOA_BUCKETS_LOG]		= { .type = NLA_U32 },
+	[TCA_COCOA_FLOW_REFILL_DELAY]	= { .type = NLA_U32 },
+	[TCA_COCOA_LOW_RATE_THRESHOLD]	= { .type = NLA_U32 },
+	[TCA_COCOA_CE_THRESHOLD]	= { .type = NLA_U64 },
+	[TCA_COCOA_GUARD_INTERVAL]	= { .type = NLA_U64 },
+	[TCA_COCOA_MAX_INCREASE]	= { .type = NLA_U64 },
+	[TCA_COCOA_MAX_MONITORING_INTERVAL]	= { .type = NLA_U64 },
 };
 
-static int cn_change(struct Qdisc *sch, struct nlattr *opt,
+static int cocoa_change(struct Qdisc *sch, struct nlattr *opt,
 				 struct netlink_ext_ack *extack)
 {
-	struct cn_sched_data *q = qdisc_priv(sch);
-	struct nlattr *tb[TCA_CN_MAX + 1];
+	struct cocoa_sched_data *q = qdisc_priv(sch);
+	struct nlattr *tb[TCA_COCOA_MAX + 1];
 	int err, drop_count = 0;
 	unsigned drop_len = 0;
-	u32 cn_log;
+	u32 cocoa_log;
 
-	// trace_printk("sch_cn: In cn_change\n");
+	// trace_printk("sch_cocoa: In cocoa_change\n");
 	if (!opt) {
 		return -EINVAL;
-		trace_printk("sch_cn: !opt :/\n");
+		trace_printk("sch_cocoa: !opt :/\n");
 	}
 
-	err = nla_parse_nested(tb, TCA_CN_MAX, opt, cn_policy, NULL);
+	err = nla_parse_nested(tb, TCA_COCOA_MAX, opt, cocoa_policy, NULL);
 	if (err < 0) {
-		trace_printk("sch_cn: Parsing failed, message: %d\n", err);
+		trace_printk("sch_cocoa: Parsing failed, message: %d\n", err);
 		return err;
 	}
 
 	sch_tree_lock(sch);
 
-	cn_log = q->cn_trees_log;
+	cocoa_log = q->cocoa_trees_log;
 
-	if (tb[TCA_CN_BUCKETS_LOG]) {
-		u32 nval = nla_get_u32(tb[TCA_CN_BUCKETS_LOG]);
+	if (tb[TCA_COCOA_BUCKETS_LOG]) {
+		u32 nval = nla_get_u32(tb[TCA_COCOA_BUCKETS_LOG]);
 
 		if (nval >= 1 && nval <= ilog2(256*1024))
-			cn_log = nval;
+			cocoa_log = nval;
 		else
 			err = -EINVAL;
 	}
-	if (tb[TCA_CN_PLIMIT])
+	if (tb[TCA_COCOA_PLIMIT])
 
-		sch->limit = nla_get_u32(tb[TCA_CN_PLIMIT]);
+		sch->limit = nla_get_u32(tb[TCA_COCOA_PLIMIT]);
 
-	if (tb[TCA_CN_FLOW_PLIMIT]) {
-		q->flow_plimit = nla_get_u32(tb[TCA_CN_FLOW_PLIMIT]);
-		trace_printk("sch_cn: Set flow_limit to %u\n", (unsigned int) q->flow_plimit);
+	if (tb[TCA_COCOA_FLOW_PLIMIT]) {
+		q->flow_plimit = nla_get_u32(tb[TCA_COCOA_FLOW_PLIMIT]);
+		trace_printk("sch_cocoa: Set flow_limit to %u\n", (unsigned int) q->flow_plimit);
 	}
-	if (tb[TCA_CN_GUARD_INTERVAL]) {
+	if (tb[TCA_COCOA_GUARD_INTERVAL]) {
 		u64 unsigned_integer;
 		kernel_fpu_begin();
-		unsigned_integer = nla_get_u64(tb[TCA_CN_GUARD_INTERVAL]);
+		unsigned_integer = nla_get_u64(tb[TCA_COCOA_GUARD_INTERVAL]);
 		q->guard_interval = *((double*) &unsigned_integer);
-		trace_printk("sch_cn: Set guard interval to something but can only print truncated int %llu\n", (u64) q->guard_interval);
+		trace_printk("sch_cocoa: Set guard interval to something but can only print truncated int %llu\n", (u64) q->guard_interval);
 		kernel_fpu_end();
 	}
-	if (tb[TCA_CN_MAX_INCREASE]) {
+	if (tb[TCA_COCOA_MAX_INCREASE]) {
 		u64 unsigned_integer;
 		kernel_fpu_begin();
-		unsigned_integer = nla_get_u64(tb[TCA_CN_MAX_INCREASE]);
+		unsigned_integer = nla_get_u64(tb[TCA_COCOA_MAX_INCREASE]);
 		q->max_increase = *((double*) &unsigned_integer);
-		trace_printk("sch_cn: Set max increase to something but can only print truncated int %llu\n", (u64) q->max_increase);
+		trace_printk("sch_cocoa: Set max increase to something but can only print truncated int %llu\n", (u64) q->max_increase);
 		kernel_fpu_end();
 	}
 
-	if (tb[TCA_CN_MAX_MONITORING_INTERVAL]) {
+	if (tb[TCA_COCOA_MAX_MONITORING_INTERVAL]) {
 		u64 unsigned_integer;
 		kernel_fpu_begin();
-		unsigned_integer = nla_get_u64(tb[TCA_CN_MAX_MONITORING_INTERVAL]);
+		unsigned_integer = nla_get_u64(tb[TCA_COCOA_MAX_MONITORING_INTERVAL]);
 		q->max_monitoring_interval = (u64) (NANOSECONDS_IN_ONE_SECOND*(*((double*) &unsigned_integer)));
-		// u64 original = *((u64*) tb[TCA_CN_GUARD_INTERVAL]);
+		// u64 original = *((u64*) tb[TCA_COCOA_GUARD_INTERVAL]);
 		// u64 what_is_printed = (u64) (q->guard_interval);
 		// u64 inverse = (u64) 1/(q->guard_interval);
 		// bool is_positive = q->guard_interval > 0;
-		trace_printk("sch_cn: Set max monitoring interval to something %llu\n", q->max_monitoring_interval);
+		trace_printk("sch_cocoa: Set max monitoring interval to something %llu\n", q->max_monitoring_interval);
 		kernel_fpu_end();
 	}
 
-	if (tb[TCA_CN_QUANTUM]) {
-		u32 quantum = nla_get_u32(tb[TCA_CN_QUANTUM]);
+	if (tb[TCA_COCOA_QUANTUM]) {
+		u32 quantum = nla_get_u32(tb[TCA_COCOA_QUANTUM]);
 
 		if (quantum > 0)
 			q->quantum = quantum;
@@ -1055,22 +1055,22 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 			err = -EINVAL;
 	}
 
-	if (tb[TCA_CN_INITIAL_QUANTUM])
-		q->initial_quantum = nla_get_u32(tb[TCA_CN_INITIAL_QUANTUM]);
+	if (tb[TCA_COCOA_INITIAL_QUANTUM])
+		q->initial_quantum = nla_get_u32(tb[TCA_COCOA_INITIAL_QUANTUM]);
 
-	if (tb[TCA_CN_FLOW_DEFAULT_RATE])
-		pr_warn_ratelimited("sch_cn: defrate %u ignored.\n",
-						nla_get_u32(tb[TCA_CN_FLOW_DEFAULT_RATE]));
+	if (tb[TCA_COCOA_FLOW_DEFAULT_RATE])
+		pr_warn_ratelimited("sch_cocoa: defrate %u ignored.\n",
+						nla_get_u32(tb[TCA_COCOA_FLOW_DEFAULT_RATE]));
 
-	if (tb[TCA_CN_FLOW_MAX_RATE])
-		q->flow_max_rate = nla_get_u32(tb[TCA_CN_FLOW_MAX_RATE]);
+	if (tb[TCA_COCOA_FLOW_MAX_RATE])
+		q->flow_max_rate = nla_get_u32(tb[TCA_COCOA_FLOW_MAX_RATE]);
 
-	if (tb[TCA_CN_LOW_RATE_THRESHOLD])
+	if (tb[TCA_COCOA_LOW_RATE_THRESHOLD])
 		q->low_rate_threshold =
-			nla_get_u32(tb[TCA_CN_LOW_RATE_THRESHOLD]);
+			nla_get_u32(tb[TCA_COCOA_LOW_RATE_THRESHOLD]);
 
-	if (tb[TCA_CN_RATE_ENABLE]) {
-		u32 enable = nla_get_u32(tb[TCA_CN_RATE_ENABLE]);
+	if (tb[TCA_COCOA_RATE_ENABLE]) {
+		u32 enable = nla_get_u32(tb[TCA_COCOA_RATE_ENABLE]);
 
 		if (enable <= 1)
 			q->rate_enable = enable;
@@ -1078,22 +1078,22 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 			err = -EINVAL;
 	}
 
-	if (tb[TCA_CN_FLOW_REFILL_DELAY]) {
-		u32 usecs_delay = nla_get_u32(tb[TCA_CN_FLOW_REFILL_DELAY]) ;
+	if (tb[TCA_COCOA_FLOW_REFILL_DELAY]) {
+		u32 usecs_delay = nla_get_u32(tb[TCA_COCOA_FLOW_REFILL_DELAY]) ;
 
 		q->flow_refill_delay = usecs_to_jiffies(usecs_delay);
 	}
 
-	if (tb[TCA_CN_ORPHAN_MASK])
-		q->orphan_mask = nla_get_u32(tb[TCA_CN_ORPHAN_MASK]);
+	if (tb[TCA_COCOA_ORPHAN_MASK])
+		q->orphan_mask = nla_get_u32(tb[TCA_COCOA_ORPHAN_MASK]);
 
 	if (!err) {
 		sch_tree_unlock(sch);
-		err = cn_resize(sch, cn_log);
+		err = cocoa_resize(sch, cocoa_log);
 		sch_tree_lock(sch);
 	}
 	while (sch->q.qlen > sch->limit) {
-		struct sk_buff *skb = cn_dequeue(sch);
+		struct sk_buff *skb = cocoa_dequeue(sch);
 
 		if (!skb)
 			break;
@@ -1103,34 +1103,34 @@ static int cn_change(struct Qdisc *sch, struct nlattr *opt,
 	}
 	qdisc_tree_reduce_backlog(sch, drop_count, drop_len);
 
-	// trace_printk("sch_cn: In cn_change at the end\n");
+	// trace_printk("sch_cocoa: In cocoa_change at the end\n");
 
 	sch_tree_unlock(sch);
 	return err;
 }
 
-static void cn_destroy(struct Qdisc *sch)
+static void cocoa_destroy(struct Qdisc *sch)
 {
-	struct cn_sched_data *q = qdisc_priv(sch);
+	struct cocoa_sched_data *q = qdisc_priv(sch);
 
-	cn_reset(sch);
-	cn_free(q->cn_root);
+	cocoa_reset(sch);
+	cocoa_free(q->cocoa_root);
 	qdisc_watchdog_cancel(&q->watchdog);
 }
 
-static int cn_init(struct Qdisc *sch, struct nlattr *opt,
+static int cocoa_init(struct Qdisc *sch, struct nlattr *opt,
 			 struct netlink_ext_ack *extack)
 {
 
-	struct cn_sched_data *q = qdisc_priv(sch);
+	struct cocoa_sched_data *q = qdisc_priv(sch);
 	int err;
 
-	// trace_printk("TCA_CN_MAX in sch_cn is %u\n", TCA_CN_MAX);
+	// trace_printk("TCA_COCOA_MAX in sch_cocoa is %u\n", TCA_COCOA_MAX);
 
 	sch->limit		= 10000;
 	q->flow_plimit		= 100;
 
-	trace_printk("sch_cn: Launching qdisc; MTU=%u!\n", psched_mtu(qdisc_dev(sch)));
+	trace_printk("sch_cocoa: Launching qdisc; MTU=%u!\n", psched_mtu(qdisc_dev(sch)));
 	q->quantum		= 2 * psched_mtu(qdisc_dev(sch));
 	q->initial_quantum	= 10 * psched_mtu(qdisc_dev(sch));
 
@@ -1141,8 +1141,8 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	q->new_flows.first	= NULL;
 	q->old_flows.first	= NULL;
 	q->delayed		= RB_ROOT;
-	q->cn_root		= NULL;
-	q->cn_trees_log		= ilog2(1024);
+	q->cocoa_root		= NULL;
+	q->cocoa_trees_log		= ilog2(1024);
 	q->orphan_mask		= 1024 - 1;
 	q->low_rate_threshold	= 550000 / 8;
 	kernel_fpu_begin();
@@ -1153,14 +1153,14 @@ static int cn_init(struct Qdisc *sch, struct nlattr *opt,
 	// u64 what_is_printed = (u64) (q->guard_interval);
 	// u64 inverse = (u64) 1/(q->guard_interval);
 	// bool is_positive = q->guard_interval > 0;
-	// trace_printk("sch_cn: Set guard interval to something (at the beginning) but can only print %llu, its inverse %llu and it is > 0: %u\n", what_is_printed, inverse, (unsigned int) is_positive);
+	// trace_printk("sch_cocoa: Set guard interval to something (at the beginning) but can only print %llu, its inverse %llu and it is > 0: %u\n", what_is_printed, inverse, (unsigned int) is_positive);
 	kernel_fpu_end();
 	qdisc_watchdog_init(&q->watchdog, sch);
 
 	if (opt) {
-		err = cn_change(sch, opt, extack);
+		err = cocoa_change(sch, opt, extack);
 	} else
-		err = cn_resize(sch, q->cn_trees_log);
+		err = cocoa_resize(sch, q->cocoa_trees_log);
 
 	return err;
 }
@@ -1172,9 +1172,9 @@ static inline int nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
 	return nla_put(skb, attrtype, sizeof(u64), &tmp);
 }
 
-static int cn_dump(struct Qdisc *sch, struct sk_buff *skb)
+static int cocoa_dump(struct Qdisc *sch, struct sk_buff *skb)
 {
-	struct cn_sched_data *q = qdisc_priv(sch);
+	struct cocoa_sched_data *q = qdisc_priv(sch);
 	struct nlattr *opts;
 	double max_monitoring_interval_as_double;
 
@@ -1182,24 +1182,24 @@ static int cn_dump(struct Qdisc *sch, struct sk_buff *skb)
 	if (opts == NULL)
 		goto nla_put_failure;
 
-	/* TCA_CN_FLOW_DEFAULT_RATE is not used anymore */
+	/* TCA_COCOA_FLOW_DEFAULT_RATE is not used anymore */
 
 	max_monitoring_interval_as_double = (double) ((q->max_monitoring_interval)/NANOSECONDS_IN_ONE_SECOND);
-	if (nla_put_u32(skb, TCA_CN_PLIMIT, sch->limit) ||
-			nla_put_u32(skb, TCA_CN_FLOW_PLIMIT, q->flow_plimit) ||
-			nla_put_u32(skb, TCA_CN_QUANTUM, q->quantum) ||
-			nla_put_u32(skb, TCA_CN_INITIAL_QUANTUM, q->initial_quantum) ||
-			nla_put_u32(skb, TCA_CN_RATE_ENABLE, q->rate_enable) ||
-			nla_put_u32(skb, TCA_CN_FLOW_MAX_RATE, q->flow_max_rate) ||
-			nla_put_u32(skb, TCA_CN_FLOW_REFILL_DELAY,
+	if (nla_put_u32(skb, TCA_COCOA_PLIMIT, sch->limit) ||
+			nla_put_u32(skb, TCA_COCOA_FLOW_PLIMIT, q->flow_plimit) ||
+			nla_put_u32(skb, TCA_COCOA_QUANTUM, q->quantum) ||
+			nla_put_u32(skb, TCA_COCOA_INITIAL_QUANTUM, q->initial_quantum) ||
+			nla_put_u32(skb, TCA_COCOA_RATE_ENABLE, q->rate_enable) ||
+			nla_put_u32(skb, TCA_COCOA_FLOW_MAX_RATE, q->flow_max_rate) ||
+			nla_put_u32(skb, TCA_COCOA_FLOW_REFILL_DELAY,
 			jiffies_to_usecs(q->flow_refill_delay)) ||
-			nla_put_u32(skb, TCA_CN_ORPHAN_MASK, q->orphan_mask) ||
-			nla_put_u32(skb, TCA_CN_LOW_RATE_THRESHOLD,
+			nla_put_u32(skb, TCA_COCOA_ORPHAN_MASK, q->orphan_mask) ||
+			nla_put_u32(skb, TCA_COCOA_LOW_RATE_THRESHOLD,
 			q->low_rate_threshold) ||
-			nla_put_u32(skb, TCA_CN_BUCKETS_LOG, q->cn_trees_log) ||
-			nla_put_u64(skb, TCA_CN_GUARD_INTERVAL, *((u64*) (&(q->guard_interval)))) ||
-			nla_put_u64(skb, TCA_CN_MAX_INCREASE, *((u64*) (&(q->max_increase)))) ||
-			nla_put_u64(skb, TCA_CN_MAX_MONITORING_INTERVAL, *((u64*) (&(max_monitoring_interval_as_double)))))
+			nla_put_u32(skb, TCA_COCOA_BUCKETS_LOG, q->cocoa_trees_log) ||
+			nla_put_u64(skb, TCA_COCOA_GUARD_INTERVAL, *((u64*) (&(q->guard_interval)))) ||
+			nla_put_u64(skb, TCA_COCOA_MAX_INCREASE, *((u64*) (&(q->max_increase)))) ||
+			nla_put_u64(skb, TCA_COCOA_MAX_MONITORING_INTERVAL, *((u64*) (&(max_monitoring_interval_as_double)))))
 		goto nla_put_failure;
 
 	return nla_nest_end(skb, opts);
@@ -1208,9 +1208,9 @@ nla_put_failure:
 	return -1;
 }
 
-static int cn_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
+static int cocoa_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
 {
-	struct cn_sched_data *q = qdisc_priv(sch);
+	struct cocoa_sched_data *q = qdisc_priv(sch);
 	struct tc_fq_qd_stats st;
 
 	sch_tree_lock(sch);
@@ -1233,45 +1233,45 @@ static int cn_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
 	return gnet_stats_copy_app(d, &st, sizeof(st));
 }
 
-static struct Qdisc_ops cn_qdisc_ops __read_mostly = {
-	.id		=	"cn",
-	.priv_size	=	sizeof(struct cn_sched_data),
+static struct Qdisc_ops cocoa_qdisc_ops __read_mostly = {
+	.id		=	"cocoa",
+	.priv_size	=	sizeof(struct cocoa_sched_data),
 
-	.enqueue	=	cn_enqueue,
-	.dequeue	=	cn_dequeue,
+	.enqueue	=	cocoa_enqueue,
+	.dequeue	=	cocoa_dequeue,
 	.peek		=	qdisc_peek_dequeued,
-	.init		=	cn_init,
-	.reset		=	cn_reset,
-	.destroy	=	cn_destroy,
-	.change		=	cn_change,
-	.dump		=	cn_dump,
-	.dump_stats	=	cn_dump_stats,
+	.init		=	cocoa_init,
+	.reset		=	cocoa_reset,
+	.destroy	=	cocoa_destroy,
+	.change		=	cocoa_change,
+	.dump		=	cocoa_dump,
+	.dump_stats	=	cocoa_dump_stats,
 	.owner		=	THIS_MODULE,
 };
 
-static int __init cn_module_init(void)
+static int __init cocoa_module_init(void)
 {
 	int ret;
 
-	cn_flow_cachep = kmem_cache_create("cn_flow_cache",
-						 sizeof(struct cn_flow),
+	cocoa_flow_cachep = kmem_cache_create("cocoa_flow_cache",
+						 sizeof(struct cocoa_flow),
 						 0, 0, NULL);
-	if (!cn_flow_cachep)
+	if (!cocoa_flow_cachep)
 		return -ENOMEM;
 
-	ret = register_qdisc(&cn_qdisc_ops);
+	ret = register_qdisc(&cocoa_qdisc_ops);
 	if (ret)
-		kmem_cache_destroy(cn_flow_cachep);
+		kmem_cache_destroy(cocoa_flow_cachep);
 	return ret;
 }
 
-static void __exit cn_module_exit(void)
+static void __exit cocoa_module_exit(void)
 {
-	unregister_qdisc(&cn_qdisc_ops);
-	kmem_cache_destroy(cn_flow_cachep);
+	unregister_qdisc(&cocoa_qdisc_ops);
+	kmem_cache_destroy(cocoa_flow_cachep);
 }
 
-module_init(cn_module_init)
-module_exit(cn_module_exit)
+module_init(cocoa_module_init)
+module_exit(cocoa_module_exit)
 MODULE_AUTHOR("Eric Dumazet");
 MODULE_LICENSE("GPL");
