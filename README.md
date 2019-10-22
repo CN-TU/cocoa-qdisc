@@ -14,6 +14,7 @@ to install it and load it into the kernel run
 Next, change into the iproute2 folder ```cd iproute2``` and run
 
     make
+    sudo make install
 
 ## Deploying
 To make the configuration for the module visible to the ```tc``` utility we have to set
