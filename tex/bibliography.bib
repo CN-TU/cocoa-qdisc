@@ -12,13 +12,12 @@
 @inproceedings{hoiland-jorgensen_piece_2018,
 	title = {Piece of {CAKE}: {A} {Comprehensive} {Queue} {Management} {Solution} for {Home} {Gateways}},
 	shorttitle = {Piece of {CAKE}},
-	doi = {10.1109/LANMAN.2018.8475045},
 	abstract = {The last several years has seen a renewed interest in smart queue management to curb excessive network queueing delay, as people have realised the prevalence of bufferbloat in real networks. However, for an effective deployment at today's last mile connections, an improved queueing algorithm is not enough in itself, as often the bottleneck queue is situated in legacy systems that cannot be upgraded. In addition, features such as per-user fairness and the ability to de-prioritise background traffic are often desirable in a home gateway.In this paper we present Common Applications Kept Enhanced (CAKE), a comprehensive network queue management system designed specifically for home Internet gateways. CAKE packs several compelling features into an integrated solution, thus easing deployment. These features include: bandwidth shaping with overhead compensation for various link layers; reasonable DiffServ handling; improved flow hashing with both per-flow and per-host queueing fairness; and filtering of TCP ACKs. Our evaluation shows that these features offer compelling advantages, and that CAKE has the potential to significantly improve performance of last-mile internet connections.},
 	booktitle = {2018 {IEEE} {International} {Symposium} on {Local} and {Metropolitan} {Area} {Networks} ({LANMAN})},
 	author = {Høiland-Jørgensen, T. and Täht, D. and Morton, J.},
 	month = jun,
 	year = {2018},
-	keywords = {telecommunication traffic, Bandwidth, Internet, transport protocols, Kernel, Linux, queueing theory, CAKE, Clocks, compelling features, comprehensive network queue management system, comprehensive queue management solution, de-prioritise background traffic, Diffserv networks, effective deployment, excessive network queueing delay, Hardware, home gateway, home Internet gateways, improved flow hashing, improved queueing algorithm, integrated solution, internetworking, last-mile internet connections, legacy systems, Logic gates, mile connections, per-host queueing fairness, per-user fairness, renewed interest, smart queue management},
+	keywords = {Bandwidth, CAKE, Clocks, compelling features, comprehensive network queue management system, comprehensive queue management solution, de-prioritise background traffic, Diffserv networks, effective deployment, excessive network queueing delay, Hardware, home gateway, home Internet gateways, improved flow hashing, improved queueing algorithm, integrated solution, Internet, internetworking, Kernel, last-mile internet connections, legacy systems, Linux, Logic gates, mile connections, per-host queueing fairness, per-user fairness, queueing theory, renewed interest, smart queue management, telecommunication traffic, transport protocols},
 	pages = {37--42},
 	file = {IEEE Xplore Abstract Record:/home/max/.zotero/zotero/zzt443zn.default/zotero/storage/3V5A49NP/8475045.html:text/html;IEEE Xplore Full Text PDF:/home/max/.zotero/zotero/zzt443zn.default/zotero/storage/X9HL66HL/Høiland-Jørgensen et al. - 2018 - Piece of CAKE A Comprehensive Queue Management So.pdf:application/pdf}
 }
@@ -27,8 +26,6 @@
 	title = {Controlling {Queue} {Delay}},
 	volume = {10},
 	issn = {1542-7730},
-	url = {http://doi.acm.org/10.1145/2208917.2209336},
-	doi = {10.1145/2208917.2209336},
 	abstract = {A modern AQM is just one piece of the solution to bufferbloat.},
 	number = {5},
 	urldate = {2019-10-11},
@@ -44,7 +41,6 @@
 	title = {{BBR}: {Congestion}-{Based} {Congestion} {Control}},
 	volume = {14, September-October},
 	shorttitle = {{BBR}},
-	url = {http://queue.acm.org/detail.cfm?id=3022184},
 	urldate = {2019-10-11},
 	journal = {ACM Queue},
 	author = {Cardwell, Neal and Cheng, Yuchung and Gunn, C. Stephen and Yeganeh, Soheil Hassas and Jacobson, Van},
@@ -57,8 +53,6 @@
 	volume = {42},
 	issn = {01635980},
 	shorttitle = {{CUBIC}},
-	url = {http://portal.acm.org/citation.cfm?doid=1400097.1400105},
-	doi = {10.1145/1400097.1400105},
 	abstract = {CUBIC is a congestion control protocol for TCP (transmission control protocol) and the current default TCP algorithm in Linux. The protocol modiﬁes the linear window growth function of existing TCP standards to be a cubic function in order to improve the scalability of TCP over fast and long distance networks. It also achieves more equitable bandwidth allocations among ﬂows with diﬀerent RTTs (round trip times) by making the window growth to be independent of RTT – thus those ﬂows grow their congestion window at the same rate. During steady state, CUBIC increases the window size aggressively when the window is far from the saturation point, and the slowly when it is close to the saturation point. This feature allows CUBIC to be very scalable when the bandwidth and delay product of the network is large, and at the same time, be highly stable and also fair to standard TCP ﬂows. The implementation of CUBIC in Linux has gone through several upgrades. This paper documents its design, implementation, performance and evolution as the default TCP algorithm of Linux.},
 	language = {en},
 	number = {5},
@@ -94,14 +88,13 @@
 @article{shreedhar_efficient_1996,
 	title = {Efficient fair queuing using deficit round-robin},
 	volume = {4},
-	doi = {10.1109/90.502236},
 	abstract = {Fair queuing is a technique that allows each flow passing through a network device to have a fair share of network resources. Previous schemes for fair queuing that achieved nearly perfect fairness were expensive to implement; specifically, the work required to process a packet in these schemes was O(log(n)), where n is the number of active flows. This is expensive at high speeds. On the other hand, cheaper approximations of fair queuing reported in the literature exhibit unfair behavior. In this paper, we describe a new approximation of fair queuing, that we call deficit round-robin. Our scheme achieves nearly perfect fairness in terms of throughput, requires only O(1) work to process a packet, and is simple enough to implement in hardware. Deficit round-robin is also applicable to other scheduling problems where servicing cannot be broken up into smaller units (such as load balancing) and to distributed queues.},
 	number = {3},
 	journal = {IEEE/ACM Transactions on Networking},
 	author = {Shreedhar, M. and Varghese, G.},
 	month = jun,
 	year = {1996},
-	keywords = {Throughput, Computer networks, Computer science, queueing theory, active flows, Circuits, deficit round-robin, distributed queues, efficient fair queuing, hardware, high speeds, Insulation, load balancing, Load management, nearly perfect fairness, network device, network resources, Operating systems, packet switching, Process control, Processor scheduling, Resource management, scheduling, scheduling problems, stochastic process, stochastic processes, throughput, unfair behavior},
+	keywords = {active flows, Circuits, Computer networks, Computer science, deficit round-robin, distributed queues, efficient fair queuing, hardware, high speeds, Insulation, load balancing, Load management, nearly perfect fairness, network device, network resources, Operating systems, packet switching, Process control, Processor scheduling, queueing theory, Resource management, scheduling, scheduling problems, stochastic process, stochastic processes, throughput, Throughput, unfair behavior},
 	pages = {375--385},
 	file = {IEEE Xplore Abstract Record:/home/max/.zotero/zotero/zzt443zn.default/zotero/storage/7J3AZ99I/502236.html:text/html;IEEE Xplore Full Text PDF:/home/max/.zotero/zotero/zzt443zn.default/zotero/storage/SJ8KT5YD/Shreedhar and Varghese - 1996 - Efficient fair queuing using deficit round-robin.pdf:application/pdf}
 }
@@ -111,8 +104,6 @@
 	series = {{SIGCOMM} '88},
 	title = {Congestion {Avoidance} and {Control}},
 	isbn = {978-0-89791-279-2},
-	url = {http://doi.acm.org/10.1145/52324.52356},
-	doi = {10.1145/52324.52356},
 	abstract = {In October of '86, the Internet had the first of what became a series of 'congestion collapses'. During this period, the data throughput from LBL to UC Berkeley (sites separated by 400 yards and three IMP hops) dropped from 32 Kbps to 40 bps. Mike Karels1 and I were fascinated by this sudden factor-of-thousand drop in bandwidth and embarked on an investigation of why things had gotten so bad. We wondered, in particular, if the 4.3BSD (Berkeley UNIX) TCP was mis-behaving or if it could be tuned to work better under abysmal network conditions. The answer to both of these questions was “yes”.
 Since that time, we have put seven new algorithms into the 4BSD TCP:
 
@@ -144,13 +135,12 @@ The equilibrium can't be reached because of resource limits along the path. In t
 
 @inproceedings{bless_policy-oriented_2018,
 	title = {Policy-oriented {AQM} {Steering}},
-	doi = {10.23919/IFIPNetworking.2018.8696627},
 	abstract = {Detecting and handling network congestion in the Internet has, again, become a vital area of research. The provisioning of low latency together with high throughput is of particular interest due to the current mix of applications running in the Internet. Active Queue Management (AQM) mechanisms come with the promise of reducing queuing delays. They, however, may adversely affect throughput and network utilization and have proven to be difficult to configure. More recent AQMs, such as CoDel, PIE, and GSP are easier to configure but work with a fixed target delay setpoint. Depending on the traffic the same setpoint value can result either in unnecessary large delays or under-utilization of the link. Policy-oriented AQM Steering automatically adapts the target delay setpoint to the current traffic situation, in order to fulfill a given quality-of-service policy. Such a policy consists of a utilization goal and an upper delay bound. This improves AQM performance with varying traffic situations and makes the impact of deploying an AQM predictable. A prototypical implementation of AQM Steering for GSP showed its performance advantages compared to static AQM variants at speeds of 10 Gbit/s and 1 Gbit/s.},
-	booktitle = {2018 {IFIP} {Networking} {Conference} ({IFIP} {Networking}) and {Workshops}},
+	booktitle = {{IFIP} {Networking}},
 	author = {Bless, R. and Hock, M. and Zitterbart, M.},
 	month = may,
 	year = {2018},
-	keywords = {Throughput, Bandwidth, Delays, Internet, network congestion, Active Queue Management mechanisms, CoDel, fixed target delay setpoint, GSP, network utilization, Packet loss, PIE, policy-oriented AQM Steering, quality of service, quality-of-service policy, queueing theory, queuing delays, static AQM variants, synchronisation, telecommunication network management, traffic situation, Upper bound},
+	keywords = {Active Queue Management mechanisms, Bandwidth, CoDel, Delays, fixed target delay setpoint, GSP, Internet, network congestion, network utilization, Packet loss, PIE, policy-oriented AQM Steering, quality of service, quality-of-service policy, queueing theory, queuing delays, static AQM variants, synchronisation, telecommunication network management, Throughput, traffic situation, Upper bound},
 	pages = {1--9},
 	file = {IEEE Xplore Abstract Record:/home/max/.zotero/zotero/zzt443zn.default/zotero/storage/CINFJZU6/8696627.html:text/html;IEEE Xplore Full Text PDF:/home/max/.zotero/zotero/zzt443zn.default/zotero/storage/WYPVSI48/Bless et al. - 2018 - Policy-oriented AQM Steering.pdf:application/pdf}
 }
@@ -241,7 +231,6 @@ The equilibrium can't be reached because of resource limits along the path. In t
 	volume = {13},
 	issn = {0733-8716, 1558-0008},
 	shorttitle = {{TCP} {Vegas}},
-	doi = {10.1109/49.464716},
 	abstract = {Vegas is an implementation of TCP that achieves between 37 and 71\% better throughput on the Internet, with one-fifth to one-half the losses, as compared to the implementation of TCP in the Reno distribution of BSD Unix. This paper motivates and describes the three key techniques employed by Vegas, and presents the results of a comprehensive experimental performance study, using both simulations and measurements on the Internet, of the Vegas and Reno implementations of TCP.{\textless}{\textgreater}},
 	number = {8},
 	journal = {IEEE Journal on Selected Areas in Communications},
