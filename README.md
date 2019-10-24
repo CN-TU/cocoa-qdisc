@@ -1,7 +1,7 @@
 # cocoa-qdisc
 CN contact: Maximilian Bachl
 
-Cocoa is a qdisc which maximizes throughput for each flow while keeping the buffer minimal.
+Cocoa is a qdisc which maximizes throughput for each flow while keeping the buffer minimal. For a more detailed description check out the [upcoming paper](https://arxiv.org/abs/1910.10604).
 ## Building
 To compile the kernel module run 
 
