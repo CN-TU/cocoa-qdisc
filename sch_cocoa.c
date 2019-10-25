@@ -618,7 +618,6 @@ static int cocoa_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 			}
 			f->enlarge = true;
 			kernel_fpu_begin();
-			// TODO: This is not optimal as it doesn't consider other flows...
 			f->flow_max_qlen = min(f->flow_max_qlen + ((int) (((double) f->current_interval.packets_transmitted)/active_interval*idle_interval)), (int) (((f->flow_max_qlen)*(q->max_increase))));
 			kernel_fpu_end();
 			if (ft.transport_protocol == 6) {
