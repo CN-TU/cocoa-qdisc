@@ -42,6 +42,7 @@ parser.add_argument('--change', type=float, default=0.5)
 parser.add_argument('--qdisc', type=str, default="cocoa")
 parser.add_argument('--cc', type=str, default="cubic")
 parser.add_argument('--thing_to_change', type=str, default="bw")
+parser.add_argument('--path_to_tc_module', type=str, required=True)
 
 opt = parser.parse_args()
 print(opt)
@@ -82,10 +83,8 @@ def run_commands(cmds, Popen=False):
 	return return_stuff
 
 env_with_tc = os.environ.copy()
-# Idiotic
-# env_with_tc["TC_LIB_DIR"] = os.path.expanduser('~/repos/iproute2/tc')
 if opt.qdisc=="cocoa":
-	env_with_tc["TC_LIB_DIR"] = "/home/max/repos/cocoa-qdisc/iproute2/tc"
+	env_with_tc["TC_LIB_DIR"] = opt.path_to_tc_module
 
 # print("os.environ", os.environ)
 
