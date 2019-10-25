@@ -16,7 +16,7 @@ assert pcap_file.startswith("sender_"), pcap_file
 receiver_pcap = 'receiver_'+('_'.join(pcap_file.split('_')[1:]))
 
 # rtt_command = f"tshark -r pcaps/{pcap_file} -Tfields -e frame.time_relative -e tcp.analysis.ack_rtt"
-new_rtt_command = f"../pantheon/tools/wintracker pcaps/{pcap_file}"
+new_rtt_command = f"./wintracker pcaps/{pcap_file}"
 
 retransmissions_command = f"tshark -Y tcp.srcport==60000&&tcp.analysis.retransmission -r pcaps/{pcap_file} -Tfields -e frame.time_relative"
 
@@ -72,7 +72,7 @@ bytes_results = [(float(item[0][0]), float(item[0][1]), float(item[1])) for item
 # print("divided", divided)
 
 with_correct_time = [((item[0] + item[1])/2, item[2]/1000000*8) for item in bytes_results]
-os.makedirs("plots", exist_ok=True)
+os.makedirs("tex/plots", exist_ok=True)
 
 plt.figure(figsize=(5,2))
 plt.xlabel("Time [s]")

@@ -35,9 +35,6 @@
 
 \usepackage[utf8]{inputenc}
 
-%\usepackage{multirow}
-%\usepackage{blindtext}
-%\usepackage{soul}
 \usepackage{enumitem}
 \usepackage{algorithmicx}
 \usepackage{algpseudocode}
@@ -263,11 +260,11 @@ We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/C
 \begin{figure}[h]
 %\subfloat[Throughput of the fq \gls{qdisc}\label{fig:fqThroughput}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/throughput_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/throughput_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap}}}
 %}{}
 %\subfloat[Delay of the fq \gls{qdisc}.\label{fig:fqDelay}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap}}}
 %}{}
 \caption{A Cubic flow with fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. It is clear that there is a standing queue and after the bandwidth halves, the minimum delay is 100\,ms even though 10\,ms would be possible.}
 \label{fig:fq}
@@ -276,11 +273,11 @@ We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/C
 \begin{figure}[h]
 %\subfloat[Throughput of \gls{cocoa}\label{fig:cnThroughput}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/throughput_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}
 %}{}
 %\subfloat[Delay of \gls{cocoa}.\label{fig:cnDelay}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/rtt_1_cn_cubic_10_20_60_0.5_bw_1571241047054.pcap}}}
 %}{}
 \caption{A Cubic flow with \gls{cocoa} at the bottleneck. The initial bandwidth is 20\,Mbit/s but we halve it after 30\,s. The delay is 10\,ms. \gls{cocoa} keeps the queue smaller than fq while achieving the same throughput.}
 \label{fig:cn}
@@ -289,11 +286,11 @@ We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/C
 \begin{figure}[h]
 %\subfloat[Throughput of \gls{cocoa}\label{fig:cnThroughput2}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/throughput_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}
 %}{}
 %\subfloat[Delay of \gls{cocoa}.\label{fig:cnDelay2}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/rtt_1_cn_cubic_10_20_60_2.0_bw_1571241151290.pcap}}}
 %}{}
 \caption{A Cubic flow with \gls{cocoa} at the bottleneck. The initial bandwidth is 20\,Mbit/s but we double it after 30\,s. The delay is 10\,ms. Also a sudden large increase of bandwidth is handled well by \gls{cocoa}.}
 \label{fig:cn2}
@@ -304,11 +301,11 @@ First we evaluate if \gls{cocoa} is able to maintain a small buffer like it is n
 \begin{figure}[h]
 %\subfloat[Throughput of the fq\_codel \gls{qdisc}\label{fig:fqCodelThroughputLong}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/throughput_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}
 %}{}
 %\subfloat[Delay of the fq\_codel \gls{qdisc}.\label{fig:fqCodelDelayLong}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/rtt_1_fq_codel_cubic_100_100_240_1.0_bw_1571244312838.pcap}}}
 %}{}
 \caption{A Cubic flow with fq\_codel at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 101.61\,ms. Total throughput is 2615\,MB.}
 \label{fig:fqCodel}
@@ -317,11 +314,11 @@ First we evaluate if \gls{cocoa} is able to maintain a small buffer like it is n
 \begin{figure}[h]
 %\subfloat[Throughput of \gls{cocoa}\label{fig:cnThroughputLong}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/throughput_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}
 %}{}
 %\subfloat[Delay of \gls{cocoa}.\label{fig:cnDelayLong}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/rtt_1_cn_cubic_100_100_240_1.0_bw_1571244036720.pcap}}}
 %}{}
 \caption{A Cubic flow with \gls{cocoa} at the bottleneck. The bandwidth is 100\,Mbit/s. The delay is 100\,ms. The average \gls{rtt} is 130.36\,ms. Total throughput is 2893\,MB.}
 \label{fig:cnLong}
@@ -349,11 +346,11 @@ We also ran experiments with the cake \gls{qdisc}. However, results were very si
 \begin{figure}[h]
 %\subfloat[Throughput of \gls{cocoa}\label{fig:cnThroughputBBR}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/throughput_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/throughput_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}
 %}{}
 %\subfloat[Delay of \gls{cocoa}.\label{fig:cnDelayBBR}
 %]{
-\includegraphics[width=\columnwidth]{{{../plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}
+\includegraphics[width=\columnwidth]{{{plots/rtt_1_cn_bbr_10_50_60_0.5_delay_1571288916582.pcap}}}
 %}{}
 \caption{A BBR~v1 flow with \gls{cocoa} at the bottleneck. The bandwidth is 50\,Mbit/s. The delay is 10\,ms and we halve it after 30\,s.}
 \label{fig:cnBBR}
