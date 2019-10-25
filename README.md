@@ -1,7 +1,7 @@
 # cocoa-qdisc
 CN contact: Maximilian Bachl
 
-Cocoa is a qdisc which maximizes throughput for each flow while keeping the buffer minimal.
+Cocoa is a qdisc which maximizes throughput for each flow while keeping the buffer minimal. For a more detailed description check out the [upcoming paper](https://arxiv.org/abs/1910.10604).
 ## Building
 To compile the kernel module run 
 
@@ -30,7 +30,7 @@ Finally, you can use the qdisc on an interface:
     sudo -E tc qdisc replace dev <interface> root cocoa initial_quantum 3028 quantum 3028
     
 ## Experimenting
-To run experiments, make sure you have [```py-virtnet```](https://github.com/CN-TU/py-virtnet) installed and then run
+To run experiments, make sure you have [```py-virtnet```](https://pypi.org/project/py-virtnet/) ([GitHub repository](https://github.com/CN-TU/py-virtnet)) installed and then run
 
     sudo bash -c 'echo > /sys/kernel/debug/tracing/trace' && sudo bash -c 'echo 1 > /sys/kernel/debug/tracing/tracing_on' && sudo python3 test.py --rate 20 --delay_to_add 1 --time 30 --qdisc cocoa --change 1 --cc cubic
     
