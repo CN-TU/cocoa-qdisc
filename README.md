@@ -36,4 +36,12 @@ To run experiments, make sure you have [```py-virtnet```](https://pypi.org/proje
     
 After running experiments with our cocoa, you can look at detailed output in the kernel tracing file at ```/sys/kernel/debug/tracing/trace```.
 
-All tests were performed on kernel ```4.19.0-6-amd64``` on Debian Buster. We use Python 3.7.2.
+To create plots of a run and show further statistics, first compile ```ẁintracker```:
+
+    go build -o wintracker wintracker.go
+    
+Then, if you have a file called ```sender_fq_codel_cubic_1_20_120_1.0_bw_1571822805075.pcap``` in the ```pcaps``` directory you can run the plotting script:
+
+    ./plot_rtt_and_bandwidth.py sender_fq_codel_cubic_1_20_120_1.0_bw_1571822805075.pcap
+
+All tests were performed on kernel ```4.19.0-6-amd64``` on Debian Buster. We use Python 3.7.2. Our go version is ```go1.10.2 linux/amd64```.
