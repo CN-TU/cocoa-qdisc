@@ -34,8 +34,9 @@ To run experiments, make sure you have [```py-virtnet```](https://pypi.org/proje
 
     sudo bash -c 'echo > /sys/kernel/debug/tracing/trace' && sudo bash -c 'echo 1 > /sys/kernel/debug/tracing/tracing_on' && sudo python3 test.py --rate 20 --delay_to_add 1 --time 30 --qdisc cocoa --change 1 --cc cubic
     
-After running experiments with our cocoa, you can look at detailed output in the kernel tracing file at ```/sys/kernel/debug/tracing/trace```.
+After running experiments with cocoa, you can look at detailed output in the kernel tracing file at ```/sys/kernel/debug/tracing/trace```.
 
+## Analyzing
 To create plots of a run and show further statistics, first compile ```ẁintracker```:
 
     go build -o wintracker wintracker.go
