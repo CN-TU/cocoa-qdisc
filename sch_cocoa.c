@@ -67,7 +67,7 @@ static u64 seconds_from_ns(u64 ns) {
 	return (current_ns-ns)/NANOSECONDS_IN_ONE_SECOND;
 }
 
-// FIXME: se only u64 because why not. Maybe fix this in the long term...
+// FIXME: At the moment only u64 are used because why not. Maybe fix this in the long term...
 struct interval_info {
 	u64 start_ns;
 	u64 end_ns;
