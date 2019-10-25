@@ -32,7 +32,7 @@ Finally, you can use the qdisc on an interface:
 ## Experimenting
 To run experiments, make sure you have [```py-virtnet```](https://pypi.org/project/py-virtnet/) ([GitHub repository](https://github.com/CN-TU/py-virtnet)) installed and then run
 
-    sudo bash -c 'echo > /sys/kernel/debug/tracing/trace' && sudo bash -c 'echo 1 > /sys/kernel/debug/tracing/tracing_on' && sudo python3 test.py --rate 20 --delay_to_add 1 --time 30 --qdisc cocoa --change 1 --cc cubic
+    sudo bash -c 'echo > /sys/kernel/debug/tracing/trace' && sudo bash -c 'echo 1 > /sys/kernel/debug/tracing/tracing_on' && sudo python3 test.py --path_to_tc_module <path to the repository>/cocoa-qdisc/iproute2/tc --rate 20 --delay_to_add 1 --time 30 --qdisc cocoa --change 1 --cc cubic
     
 After running experiments with cocoa, you can look at detailed output in the kernel tracing file at ```/sys/kernel/debug/tracing/trace```.
 
