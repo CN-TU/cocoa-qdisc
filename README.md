@@ -37,7 +37,7 @@ To run experiments, make sure you have [```py-virtnet```](https://pypi.org/proje
 After running experiments with cocoa, you can look at detailed output in the kernel tracing file at ```/sys/kernel/debug/tracing/trace```.
 
 ## Analyzing
-To create plots of a run and show further statistics, first compile ```ẁintracker```:
+To create plots of a run and show further statistics, first compile ```wintracker```:
 
     go build -o wintracker wintracker.go
     
