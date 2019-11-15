@@ -11,23 +11,19 @@ to install it and load it into the kernel run
 
     sudo make install
     
-Next, change into the iproute2 folder ```cd iproute2``` and run
+Next, to make ``tc`` aware of the module, change into the iproute2 folder ```cd iproute2``` and run
 
     make
     sudo make install
 
 ## Deploying
-To make the configuration for the module visible to the ```tc``` utility we have to set
-
-    export TC_LIB_DIR=<path to the repository>/cocoa-qdisc/iproute2/tc
-
 Finally, you can use the qdisc on an interface: 
 
-    sudo -E tc qdisc replace dev <interface> root cocoa
+    sudo tc qdisc replace dev <interface> root cocoa
     
 ```tc``` also allows you to specify options like this: 
 
-    sudo -E tc qdisc replace dev <interface> root cocoa initial_quantum 3028 quantum 3028
+    sudo tc qdisc replace dev <interface> root cocoa initial_quantum 3028 quantum 3028
     
 ## Experimenting
 To run experiments, make sure you have [```py-virtnet```](https://pypi.org/project/py-virtnet/) ([GitHub repository](https://github.com/CN-TU/py-virtnet)) installed and then run
