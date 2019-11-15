@@ -31,7 +31,7 @@
 \documentclass[10pt,sigconf,letterpaper,dvipsnames\ifx\removeHeaders\tempYes ,nonacm\fi]{acmart}
 \acmYear{2019}
 \copyrightyear{2019}
-\acmConference{Workshop on Buffer Sizing}{December 2-3, 2019}{Stanford, California, USA}
+\acmConference[BS'19]{Buffer Sizing Workshop}{December 2-3}{Stanford, CA}
 
 \usepackage[utf8]{inputenc}
 
@@ -110,7 +110,7 @@
 \newacronym{cocoa}{cocoa}{Congestion Control Aware qdisc}
 
 \begin{abstract}
-Recent model-based congestion control algorithms such as BBR use repeated measurements at the end-point to build a model of the network connection and use it to achieve optimal throughput with low queuing delay. Conversely, applying this model-based approach to Active Queue Management (AQM) has so far received less attention. We propose the new AQM scheduler \textit{cocoa} based on fair queuing, which adapts the buffer size depending on the needs of each flow without requiring active participation from the endpoint. We implement this scheduler for the Linux kernel and show that it interacts well with the most common congestion control algorithms and can significantly increase throughput compared to \codel while avoiding overbuffering.
+Recent model-based congestion control algorithms such as BBR use repeated measurements at the endpoint to build a model of the network connection and use it to achieve optimal throughput with low queuing delay. Conversely, applying this model-based approach to Active Queue Management (AQM) has so far received less attention. We propose the new AQM scheduler \textit{cocoa} based on fair queuing, which adapts the buffer size depending on the needs of each flow without requiring active participation from the endpoint. We implement this scheduler for the Linux kernel and show that it interacts well with the most common congestion control algorithms and can significantly increase throughput compared to \codel{} while avoiding overbuffering.
 \end{abstract}
 
 %%
@@ -266,7 +266,7 @@ We evaluate \gls{cocoa} using the \texttt{py-virtnet} (\url{https://github.com/C
 %]{
 \includegraphics[width=\columnwidth]{{{plots/rtt_1_fq_cubic_10_20_60_0.5_bw_1571240937211.pcap}}}
 %}{}
-\caption{A Cubic flow with fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but it is halved after 30\,s. The delay is 10\,ms. It is clear that there is a standing queue and after the bandwidth halves, the minimum delay is 100\,ms even though 10\,ms would be possible.}
+\caption{A Cubic flow with fq at the bottleneck. The initial bandwidth is 20\,Mbit/s but we halve it after 30\,s. The delay is 10\,ms. It is clear that there is a standing queue and after the bandwidth halves, the minimum delay is 100\,ms even though 10\,ms would be possible.}
 \label{fig:fq}
 \end{figure}
 
@@ -360,9 +360,9 @@ Also for BBR~v1, throughput quickly reaches its maximum while no standing queue 
 
 \section{Discussion}
 
-Our goal was to design a \gls{qdisc} which achieves maximum throughput while keeping the queuing delay as small as possible. The results of the experiments, which we perform with a prototype of \gls{cocoa}, show that there are certain common scenarios in which current state-of-the-art \glspl{qdisc} like fq, fq\_codel and cake fall short of the optimum throughput by a significant margin while our approach succeeds in fully utilizing the bottleneck link (with a potential increase in delay). Furthermore, the aforementioned \glspl{qdisc} also suffer from standing queues in scenarios with small \gls{bdp} which we can also mitigate with our approach. 
+Our goal was to design a fair \gls{qdisc} which achieves maximum throughput while keeping the queuing delay as small as possible. The results of the experiments, which we perform with a prototype of \gls{cocoa}, show that there are certain common scenarios in which current state-of-the-art fair \glspl{qdisc} like fq, fq\_codel and cake fall short of the optimum throughput by a significant margin while our approach succeeds in fully utilizing the bottleneck link (with a potential increase in delay) (\autoref{tab:performance_results}; \autoref{fig:fqCodel} vs.~\autoref{fig:cnLong}). Furthermore, the aforementioned \glspl{qdisc} also suffer from standing queues in scenarios with small \gls{bdp} which we can also mitigate with our approach (\autoref{fig:fq} vs.~\autoref{fig:cn}). 
 
-We see this work as an initial step towards flow-adaptive queuing at bottlenecks. An interesting further improvement could be to not statically initialize the buffer with a constant 100 packets but instead use experience from previous flows. Moreover, we think that a promising direction for future work might be to explore the use of reinforcement learning. Such an approach would fingerprint a flow and choose the buffer size accordingly, maximizing a chosen objective such as high throughput with minimal delay. 
+We see this work as an initial step towards flow-adaptive fair queuing at bottlenecks. An interesting further improvement could be to not statically initialize the buffer with a constant 100 packets but instead use experience from previous flows. Moreover, we think that a promising direction for future work might be to explore the use of reinforcement learning. Such an approach would fingerprint a flow and choose the buffer size accordingly, maximizing a chosen objective such as high throughput with minimal delay. 
 
 \section*{Acknowledgements}
 We thank Gernot Vormayr for providing us with \texttt{py-virtnet}, a toolkit for easily building virtual networks. 

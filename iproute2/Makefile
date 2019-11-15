@@ -14,15 +14,9 @@ endif
 
 PREFIX?=/usr
 LIBDIR?=$(PREFIX)/lib
-SBINDIR?=/sbin
 CONFDIR?=/etc/iproute2
-NETNS_RUN_DIR?=/var/run/netns
-NETNS_ETC_DIR?=/etc/netns
 DATADIR?=$(PREFIX)/share
 HDRDIR?=$(PREFIX)/include/iproute2
-DOCDIR?=$(DATADIR)/doc/iproute2
-MANDIR?=$(DATADIR)/man
-ARPDDIR?=/var/lib/arpd
 KERNEL_INCLUDE?=/usr/include
 BASH_COMPDIR?=$(DATADIR)/bash-completion/completions
 
@@ -37,11 +31,6 @@ DEFINES+= -DNO_SHARED_LIBS
 endif
 
 DEFINES+=-DCONFDIR=\"$(CONFDIR)\" \
-         -DNETNS_RUN_DIR=\"$(NETNS_RUN_DIR)\" \
-         -DNETNS_ETC_DIR=\"$(NETNS_ETC_DIR)\"
-
-#options for mpls
-ADDLIB+=mpls_ntop.o mpls_pton.o
 
 CC := gcc
 HOSTCC ?= $(CC)
@@ -55,10 +44,7 @@ WFLAGS += -Wmissing-declarations -Wold-style-definition -Wformat=2
 CFLAGS := $(WFLAGS) $(CCOPTS) -I../include -I../include/uapi $(DEFINES) $(CFLAGS)
 YACCFLAGS = -d -t -v
 
-SUBDIRS=lib ip tc bridge misc netem genl tipc devlink rdma man
-
-LIBNETLINK=../lib/libutil.a ../lib/libnetlink.a
-LDLIBS += $(LIBNETLINK)
+SUBDIRS=tc
 
 all: config.mk
 	@set -e; \
@@ -71,9 +57,6 @@ help:
 	@echo " clean               - remove products of build"
 	@echo " distclean           - remove configuration and build"
 	@echo " install             - install binaries on local machine"
-	@echo " check               - run tests"
-	@echo " cscope              - build cscope database"
-	@echo " snapshot            - generate version number header"
 	@echo ""
 	@echo "Make Arguments:"
 	@echo " V=[0|1]             - set build verbosity level"
@@ -82,28 +65,10 @@ config.mk:
 	sh configure $(KERNEL_INCLUDE)
 
 install: all
-	install -m 0755 -d $(DESTDIR)$(SBINDIR)
-	install -m 0755 -d $(DESTDIR)$(CONFDIR)
-	install -m 0755 -d $(DESTDIR)$(ARPDDIR)
-	install -m 0755 -d $(DESTDIR)$(HDRDIR)
-	install -m 0755 -d $(DESTDIR)$(DOCDIR)/examples
-	install -m 0755 -d $(DESTDIR)$(DOCDIR)/examples/diffserv
-	install -m 0644 README.iproute2+tc $(shell find examples -maxdepth 1 -type f) \
-		$(DESTDIR)$(DOCDIR)/examples
-	install -m 0644 $(shell find examples/diffserv -maxdepth 1 -type f) \
-		$(DESTDIR)$(DOCDIR)/examples/diffserv
 	@for i in $(SUBDIRS);  do $(MAKE) -C $$i install; done
-	install -m 0644 $(shell find etc/iproute2 -maxdepth 1 -type f) $(DESTDIR)$(CONFDIR)
-	install -m 0755 -d $(DESTDIR)$(BASH_COMPDIR)
-	install -m 0644 bash-completion/tc $(DESTDIR)$(BASH_COMPDIR)
-	install -m 0644 include/bpf_elf.h $(DESTDIR)$(HDRDIR)
-
-snapshot:
-	echo "static const char SNAPSHOT[] = \""`date +%y%m%d`"\";" \
-		> include/SNAPSHOT.h
 
 clean:
-	@for i in $(SUBDIRS) testsuite; \
+	@for i in $(SUBDIRS); \
 	do $(MAKE) $(MFLAGS) -C $$i clean; done
 
 clobber:
@@ -113,16 +78,7 @@ clobber:
 
 distclean: clobber
 
-check: all
-	cd testsuite && $(MAKE) && $(MAKE) alltests
-	@if command -v man >/dev/null 2>&1; then \
-		echo "Checking manpages for syntax errors..."; \
-		$(MAKE) -C man check; \
-	else \
-		echo "man not installed, skipping checks for syntax errors."; \
-	fi
-
 cscope:
-	cscope -b -q -R -Iinclude -sip -slib -smisc -snetem -stc
+	cscope -b -q -R -Iinclude -stc
 
 .EXPORT_ALL_VARIABLES:
