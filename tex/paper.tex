@@ -28,13 +28,13 @@
 
 \def\tempYes{yes}
 \def\tempNo{no}
-\documentclass[sigconf, 10pt, letterpaper,dvipsnames\ifx\removeHeaders\tempYes ,nonacm\fi]{acmart}
+\documentclass[sigconf, 10pt, letterpaper, dvipsnames\ifx\removeHeaders\tempYes ,nonacm\fi]{acmart}
 
 %\documentclass[sigconf]{acmart}
 
 % Copyright
-\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference info
-\setcopyright{none}
+%\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference info
+%\setcopyright{none}
 %\setcopyright{acmcopyright}
 %\setcopyright{acmlicensed}
 %\setcopyright{rightsretained}
@@ -43,13 +43,16 @@
 %\setcopyright{cagov}
 %\setcopyright{cagovmixed}
 
-\settopmatter{printacmref=false, printccs=false, printfolios=true}
+%\settopmatter{printacmref=false, printccs=false, printfolios=true}
 
-% DOI
-\acmDOI{}
-
-% ISBN
-\acmISBN{}
+\copyrightyear{2019}
+\acmYear{2019}
+\setcopyright{acmlicensed}
+\acmConference[BS '19]{2019 Workshop on Buffer Sizing}{December 2--3, 2019}{Palo Alto, CA, USA}
+\acmBooktitle{2019 Workshop on Buffer Sizing (BS '19), December 2--3, 2019, Palo Alto, CA, USA}
+\acmPrice{15.00}
+\acmDOI{10.1145/3375235.3375236}
+\acmISBN{978-1-4503-7745-4/19/12}
 
 %Conference
 %\acmConference[Submitted for review to SIGCOMM]{}
@@ -57,11 +60,11 @@
 %\copyrightyear{}
 
 %% {} with no args suppresses printing of the price
-\acmPrice{}
-
-\acmYear{2019}
-\copyrightyear{2019}
-\acmConference[BS'19]{Buffer Sizing Workshop}{December 2-3}{Stanford, CA}
+%\acmPrice{}
+%
+%\acmYear{2019}
+%\copyrightyear{2019}
+%\acmConference[BS'19]{Buffer Sizing Workshop}{December 2-3}{Stanford, CA}
 
 \usepackage[utf8]{inputenc}
 
